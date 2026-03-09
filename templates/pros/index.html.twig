@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AssureX – Prospects</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ asset('css/pros.css') }}">
+    <link rel="icon" type="image/png" href="{{ asset('images/logo.png') }}">
+</head>
+<body>
+
+<!-- ── Sidebar ── -->
+<aside class="sidebar">
+    <div class="sidebar__brand">
+        <div class="brand-icon">🛡️</div>
+        <div class="brand-text"><h1>Assure<span>X</span></h1><p>Assurance Platform</p></div>
+    </div>
+    <nav class="sidebar__nav">
+        <div class="nav-section-label">Overview</div>
+        <a href="{{ path('app_dashboard') }}" class="nav-item"><span class="icon">📊</span> Dashboard</a>
+        <div class="nav-section-label">Clients</div>
+        <a href="{{ path('app_pros') }}" class="nav-item active"><span class="icon">📋</span> Prospects <span class="badge red">{{ (dossiers|default([]))|filter(d => d.status == 'pending')|length }}</span></a>
+    </nav>
+    <div class="sidebar__footer">
+        <div class="user-chip">
+            <div class="avatar">{% if app.user %}{{ (app.user.userIdentifier ?? 'A')|first|upper }}{% else %}A{% endif %}</div>
+            <div class="user-info">
+                <p>{{ app.user ? app.user.userIdentifier : 'Commercial' }}</p>
+                <span>{% if is_granted('ROLE_ADMIN') %}Administrator{% else %}Commercial{% endif %}</span>
+            </div>
+            <a href="{{ logout_path() }}" class="logout-icon" title="Logout">↩</a>
+        </div>
+    </div>
+</aside>
+
+<!-- ── Main ── -->
+<div class="main">
+    <header class="topbar">
+        <div>
+            <div class="topbar__title">Prospects — Dossiers</div>
+            <div class="topbar__sub">
+                {% if is_granted('ROLE_ADMIN') %}
+                    Admin view — all dossiers across all commercials
+                {% else %}
+                    Commercial view — your assigned dossiers
+                {% endif %}
+            </div>
+        </div>
+        <div class="topbar__spacer"></div>
+
+        <button class="theme-toggle" id="themeToggle" title="Toggle theme">🌙</button>
+    </header>
+
+    <div class="content">
+
+        {% for message in app.flashes('success') %}
+            <div class="flash flash-success">✅ {{ message }}</div>
+        {% endfor %}
+        {% for message in app.flashes('error') %}
+            <div class="flash flash-error">⚠️ {{ message }}</div>
+        {% endfor %}
+
+        <!-- Stats strip -->
+        <div class="stats-strip">
+            <div class="stat-card white">
+                <div class="stat-icon">🔎</div>
+                <div>
+                    <div class="stat-val">{{ (dossiers|default([]))|filter(d => d.status == 'review')|length }}</div>
+                    <div class="stat-lbl">Admin Review</div>
+                </div>
+            </div>
+            <div class="stat-card green">
+                <div class="stat-icon">✅</div>
+                <div>
+                    <div class="stat-val">{{ (dossiers|default([]))|filter(d => d.status == 'approved')|length }}</div>
+                    <div class="stat-lbl">Approved</div>
+                </div>
+            </div>
+            <div class="stat-card red">
+                <div class="stat-icon">❌</div>
+                <div>
+                    <div class="stat-val">{{ (dossiers|default([]))|filter(d => d.status == 'rejected')|length }}</div>
+                    <div class="stat-lbl">Rejected</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dossiers panel -->
+        <div class="panel">
+            <div class="panel__head">
+                <h3>All Dossiers</h3>
+                <div class="filter-tabs">
+                    <button class="ftab active" onclick="filterStatus('all',this)">All</button>
+                    <button class="ftab" onclick="filterStatus('review',this)">🔎 Review</button>
+                    <button class="ftab" onclick="filterStatus('approved',this)">✅ Approved</button>
+                    <button class="ftab" onclick="filterStatus('rejected',this)">❌ Rejected</button>
+                </div>
+            </div>
+
+            <div class="dossier-list" id="dossierList">
+
+                {% if (dossiers|default([])) is empty %}
+                    <div class="empty-state">
+                        <div class="big">📋</div>
+                        <p>No dossiers yet. They will appear here once a client health form is submitted.</p>
+                    </div>
+                {% else %}
+
+                {% for dossier in dossiers|default([]) %}
+                <div class="dossier-card {{ dossier.status }}" data-status="{{ dossier.status }}" data-name="{{ dossier.firstName }} {{ dossier.lastName }}">
+
+                    {# Client avatar #}
+                    <div class="card-avatar">{{ dossier.firstName|first|upper }}</div>
+
+                    {# Client info #}
+                    <div class="card-info">
+                        <div class="card-name">{{ dossier.firstName }} {{ dossier.lastName }}</div>
+                        <div class="card-meta">
+                            <span>📧 {{ dossier.email }}</span>
+                            <span>📞 {{ dossier.phone }}</span>
+                            <span>
+                                {% if dossier.type == 'taxi' %}🚖
+                                {% elseif dossier.type == 'home' %}🏠
+                                {% elseif dossier.type == 'auto' %}🚗
+                                {% else %}❤️
+                                {% endif %}
+                                {{ dossier.plan|capitalize }} Plan
+                            </span>
+                            <span>📅 Submitted {{ dossier.createdAt|date('d M Y') }}</span>
+                        </div>
+                        {# Rejection note from admin #}
+                        {% if dossier.status == 'rejected' and dossier.rejectionNote %}
+                        <div style="margin-top:.6rem;">
+                            <div class="rejection-note">
+                                ⚠️ <strong>Admin feedback:</strong> {{ dossier.rejectionNote }}
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    {# Documents status #}
+                    <div class="docs-status">
+                        <span class="status-pill pill-{{ dossier.status }}">
+                            {% if dossier.status == 'pending' %}⏳ Pending
+                            {% elseif dossier.status == 'claimed' %}🤝 Claimed
+                            {% elseif dossier.status == 'review' %}🔎 Admin Review
+                            {% elseif dossier.status == 'approved' %}✅ Approved
+                            {% elseif dossier.status == 'rejected' %}❌ Rejected
+                            {% endif %}
+                        </span>
+                        <div class="doc-pills">
+                            {% for doc in ['cin','photo','medical','salary','contract'] %}
+                                {% if doc in dossier.documents %}
+                                    <span class="doc-pill doc-ok">{{ doc|upper }}</span>
+                                {% else %}
+                                    <span class="doc-pill doc-missing">{{ doc|upper }} ✗</span>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                        {% if dossier.assignedTo %}
+                                <div class="claimed-by">👔 Assigned to <strong>{{ dossier.assignedTo.email }}</strong></div>
+                        {% endif %}
+                    </div>
+
+                    {# Actions #}
+                    <div class="card-actions">
+
+                        {# View details button always visible #}
+                        <a href="{{ path('app_pros_show', {id: dossier.id}) }}" class="btn-view">👁 View Details</a>
+
+                        {# Commercial: send to review if assigned to them #}
+                        {% if not is_granted('ROLE_ADMIN') %}
+                            {% if dossier.status == 'claimed' and dossier.assignedTo == app.user %}
+                                <form method="post" action="{{ path('app_pros_submit_review', {id: dossier.id}) }}">
+                                    <input type="hidden" name="_token" value="{{ csrf_token('review_' ~ dossier.id) }}">
+                                    <button type="submit" class="btn-claim">📤 Send to Admin Review</button>
+                                </form>
+                            {% endif %}
+                        {% endif %}
+
+                    </div>
+
+                </div>
+                {% endfor %}
+                {% endif %}
+
+            </div>
+        </div>
+
+    </div>{# /content #}
+</div>{# /main #}
+
+<!-- ── Reject modal (admin only) ── -->
+<div class="modal-overlay" id="rejectModal">
+    <div class="modal">
+        <h3>❌ Reject Dossier</h3>
+        <p>Explain to the commercial what is missing or needs to be corrected.</p>
+        <form method="post" id="rejectForm" action="">
+            <input type="hidden" name="_token" id="rejectToken" value="">
+            <textarea name="rejection_note" placeholder="e.g. Missing medical certificate, CIN photo is blurry…" required></textarea>
+            <div class="modal-actions">
+                <button type="button" class="btn-modal-cancel" onclick="closeRejectModal()">Cancel</button>
+                <button type="submit" class="btn-modal-send">Send Feedback</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    // Theme toggle
+    const toggle = document.getElementById('themeToggle');
+    if (localStorage.getItem('theme') === 'light') { document.body.classList.add('light-mode'); toggle.textContent = '☀️'; }
+    toggle.addEventListener('click', () => {
+        document.body.classList.toggle('light-mode');
+        const isLight = document.body.classList.contains('light-mode');
+        toggle.textContent = isLight ? '☀️' : '🌙';
+        localStorage.setItem('theme', isLight ? 'light' : 'dark');
+    });
+
+    // Status filter
+    function filterStatus(status, btn) {
+        document.querySelectorAll('.ftab').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        document.querySelectorAll('.dossier-card').forEach(card => {
+            card.style.display = (status === 'all' || card.dataset.status === status) ? '' : 'none';
+        });
+    }
+
+
+
+    // Reject modal
+    function openRejectModal(id) {
+        document.getElementById('rejectForm').action = `/pros/${id}/reject`;
+        document.getElementById('rejectToken').value = `reject_${id}`;
+        document.getElementById('rejectModal').classList.add('open');
+    }
+    function closeRejectModal() {
+        document.getElementById('rejectModal').classList.remove('open');
+    }
+    document.getElementById('rejectModal').addEventListener('click', function(e) {
+        if (e.target === this) closeRejectModal();
+    });
+</script>
+
+</body>
+</html>

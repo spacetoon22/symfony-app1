@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AssureX – Sign In</title>
+    <link rel="stylesheet" href="{{ asset('css/login.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/png" href="{{ asset('images/logo.png') }}">
+</head>
+<script>
+    const toggle = document.getElementById('themeToggle');
+    // Remember preference across pages
+    if (localStorage.getItem('theme') === 'light') {
+        document.body.classList.add('light-mode');
+        toggle.textContent = '☀️';
+    }
+    toggle.addEventListener('click', () => {
+        document.body.classList.toggle('light-mode');
+        const isLight = document.body.classList.contains('light-mode');
+        toggle.textContent = isLight ? '☀️' : '🌙';
+        localStorage.setItem('theme', isLight ? 'light' : 'dark');
+    });
+</script>
+<body>
+
+    <!-- Animated orbs -->
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+
+    <!-- Rising particles -->
+    <div class="particles" id="particles"></div>
+
+    <!-- Login card -->
+    <div class="login-wrapper">
+        <div class="login-card">
+
+            <div class="login-card__logo">
+                <div class="shield-icon">🛡️</div>
+                <h2>Assure<span class="brand-name">X</span></h2>
+                <p>Sign in to your assurance account</p>
+            </div>
+
+            <div class="divider"></div>
+
+            {% if error %}
+                <div class="alert-error">
+                    ⚠️ {{ error.messageKey|trans(error.messageData, 'security') }}
+                </div>
+            {% endif %}
+            
+            <form method="post">
+                <div class="form-group">
+                    <label for="inputEmail">Email or Username</label>
+                    <input type="username_email"
+                           id="inputEmail"
+                           name="email"
+                           value="{{ last_username }}"
+                           autocomplete="username"
+                           required
+                           autofocus
+                           placeholder="Email or Username">
+                </div>
+                <div class="form-group">
+                    <label for="inputPassword">Password</label>
+                    <input type="password"
+                           id="inputPassword"
+                           name="password"
+                           autocomplete="current-password"
+                           required
+                           placeholder="••••••••">
+                </div>
+                {% if app.user %}
+                <div class="logged-in-note">
+                    Logged in as {{ app.user.userIdentifier }}.
+                    <a href="{{ logout_path() }}">Logout</a>
+                </div>
+                {% endif %}
+                <div class="form-check">
+                    <input type="checkbox" id="remember_me" name="_remember_me">
+                    <label for="remember_me">Remember me</label>
+                </div>
+                <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
+                <button type="submit" class="btn-login">Sign In →</button>
+            </form>
+            
+            
+            <div class="card-footer">
+                <span>🔒</span> Secured with 256-bit encryption
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Generate rising particles
+        const container = document.getElementById('particles');
+        const count = 28;
+        for (let i = 0; i < count; i++) {
+            const p = document.createElement('div');
+            p.className = 'particle';
+            p.style.left = Math.random() * 100 + 'vw';
+            p.style.width = (Math.random() * 2.5 + 1) + 'px';
+            p.style.height = p.style.width;
+            p.style.animationDuration = (Math.random() * 14 + 8) + 's';
+            p.style.animationDelay = (Math.random() * 12) + 's';
+            p.style.opacity = 0;
+            container.appendChild(p);
+        }
+    </script>
+</body>
+</html>

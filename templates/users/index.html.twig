@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AssureX – Users</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ asset('css/users.css') }}">
+    <link rel="icon" type="image/png" href="{{ asset('images/logo.png') }}">
+</head>
+<body>
+
+<!-- ── Sidebar ── -->
+<aside class="sidebar">
+    <div class="sidebar__brand">
+        <div class="brand-icon">🛡️</div>
+        <div class="brand-text">
+            <h1>Assure<span>X</span></h1>
+            <p>Assurance Platform</p>
+        </div>
+    </div>
+
+    <nav class="sidebar__nav">
+        <div class="nav-section-label">Overview</div>
+        <a href="{{ path('app_dashboard') }}" class="nav-item">
+            <span class="icon">📊</span> Dashboard
+        </a>
+
+
+
+        <div class="nav-section-label">Management</div>
+        <a href="{{ path('app_users') }}" class="nav-item active">
+            <span class="icon">👤</span> Users
+        </a>
+
+        <a href="{{ path('app_settings') }}" class="nav-item">
+                <span class="icon">⚙️</span> Settings
+        </a>
+    </nav>
+
+    <div class="sidebar__footer">
+        <div class="user-chip">
+            <div class="avatar">
+                {% if app.user %}
+                    {{ (app.user.userIdentifier ?? 'A')|first|upper }}
+                {% else %}
+                    A
+                {% endif %}
+            </div>
+            <div class="user-info">
+                <p>{{ app.user ? app.user.userIdentifier : 'Admin' }}</p>
+                <span>Administrator</span>
+            </div>
+            <a href="{{ logout_path() }}" class="logout-icon" title="Logout">↩</a>
+        </div>
+    </div>
+</aside>
+
+<!-- ── Main ── -->
+<div class="main">
+
+    <header class="topbar">
+        <div>
+            <div class="topbar__title">User Management</div>
+            <div class="topbar__sub">Manage platform accounts &amp; roles</div>
+        </div>
+
+    </header>
+
+    <div class="content">
+
+        {# Flash messages #}
+        {% for message in app.flashes('success') %}
+            <div class="flash-success">✅ {{ message }}</div>
+        {% endfor %}
+        {% for message in app.flashes('error') %}
+            <div class="flash-error">⚠️ {{ message }}</div>
+        {% endfor %}
+
+        {# Page header #}
+        <div class="page-header">
+            <div>
+                <h2>All Users</h2>
+                <p>{{ users is defined ? users|length : 0 }} accounts registered</p>
+            </div>
+            <a href="{{ path('app_register') }}" class="btn-add">➕ Add User</a>
+        </div>
+
+        {# Stats strip #}
+        <div class="stats-strip">
+            <div class="stat-card">
+                <div class="stat-icon">👥</div>
+                <div>
+                    <div class="stat-val">{{ users|default([])|length }}</div>
+                    <div class="stat-lbl">Total Users</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">🛡️</div>
+                <div>
+                    <div class="stat-val">
+                        {{ users|default([])|filter(u => u.roles|default([]) is iterable and 'ROLE_ADMIN' in u.roles)|length }}
+                    </div>
+                    <div class="stat-lbl">Admins</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">💼</div>
+                <div>
+                    <div class="stat-val">
+
+                        {{ users|default([])|filter(u => u.roles|default([]) is iterable and 'ROLE_COMMERCIAL' in u.roles)|length }}
+
+                    </div>
+                    <div class="stat-lbl">COMMERCIAL</div>
+                </div>
+            </div>
+        </div>
+
+        {# Table panel #}
+        <div class="panel">
+            <div class="panel__head">
+                <h3>Accounts</h3>
+                <div class="filter-tabs">
+                    <button class="ftab active" onclick="filterRole('all', this)">All</button>
+                    <button class="ftab" onclick="filterRole('admin', this)">Admins</button>
+                    <button class="ftab" onclick="filterRole('user', this)">Users</button>
+                    <button class="ftab" onclick="filterRole('commercial', this)">Commercial</button>
+                </div>
+            </div>
+
+             
+            <div class="table-wrap">
+                {# 1. Open the check #}
+                {% if users|default([]) is empty %}
+                    <div class="empty-state">
+                        <div class="big">👤</div>
+                        <p>No users found in the database.</p>
+                    </div>
+                {% else %}
+                    <table id="usersTable">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>User</th>
+                                <th>Role</th>
+                                <th>Password</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {# 2. Only ONE loop goes here #}
+                            {% for user in users %}
+                            <tr data-role="
+                                {%- if 'ROLE_ADMIN' in user.roles -%}admin
+                                {%- elseif 'ROLE_COMMERCIAL' in user.roles -%}commercial
+                                {%- else -%}user
+                                {%- endif -%}
+                            ">
+                                <td style="color: var(--slate); font-size:.8rem;">{{ user.id }}</td>
+                                <td>
+                                    <div class="user-cell">
+                                        <div class="u-avatar">{{ user.username|first|upper }}</div>
+                                        <div>
+                                            <div class="u-username">{{ user.username }}</div>
+                                            <div class="u-id">ID #{{ user.id }}</div>
+                                        </div>
+                                    </div>
+                                </td>
+
+                                <td>
+                                    {% if 'ROLE_ADMIN' in user.roles %}
+                                        <span class="role-pill role-admin">🛡️ Admin</span>
+                                    {% elseif 'ROLE_COMMERCIAL' in user.roles %}
+                                        <span class="role-pill role-commercial">💼 Commercial</span>
+                                    {% else %}
+                                        <span class="role-pill role-user">👤 User</span>
+                                    {% endif %}
+                                </td>
+
+                                <td><span class="pwd-mask">••••••••••••</span></td>
+                                <td>
+                                    <div class="row-actions">
+                                        
+                                        <a href="{{ path('app_edit', {id: user.id}) }}" class="row-btn" title="Edit">✏️</a>
+                                        <form method="post" action="{{ path('app_users_delete', {id: user.id}) }}" onsubmit="return confirm('Delete this user?');" style="display:inline;">
+                                            <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ user.id) }}">
+                                            <button type="submit" class="row-btn danger" title="Delete">🗑️</button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                {# 3. Close the check ONLY ONCE #}
+                {% endif %}
+            </div>
+
+        </div>
+
+    </div>{# /content #}
+</div>{# /main #}
+
+<script>
+
+
+    // Role filter tabs
+    function filterRole(role, btn) {
+        document.querySelectorAll('.ftab').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        document.querySelectorAll('#usersTable tbody tr').forEach(row => {
+            row.style.display = (role === 'all' || row.dataset.role === role) ? '' : 'none';
+        });
+    }
+</script>
+
+</body>
+</html>

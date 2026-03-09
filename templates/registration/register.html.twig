@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AssureX – Add User</title>
+    <link rel="stylesheet" href="{{ asset('css/register.css') ~ '?v=2' }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/png" href="{{ asset('images/logo.png') }}">
+</head>
+<body>
+
+<!-- ── Sidebar ── -->
+<aside class="sidebar">
+    <div class="sidebar__brand">
+        <div class="brand-icon">🛡️</div>
+        <div class="brand-text">
+            <h1>Assure<span>X</span></h1>
+            <p>Assurance Platform</p>
+        </div>
+    </div>
+
+    <nav class="sidebar__nav">
+        <div class="nav-section-label">Overview</div>
+        <a href="{{ path('app_dashboard') }}" class="nav-item">
+            <span class="icon">📊</span> Dashboard
+        </a>
+
+        <div class="nav-section-label">Management</div>
+        <a href="{{ path('app_users') }}" class="nav-item active">
+            <span class="icon">👤</span> Users
+        </a>
+
+        <a href="{{ path('app_settings') }}" class="nav-item">
+                <span class="icon">⚙️</span> Settings
+        </a>
+        </nav>
+
+    <div class="sidebar__footer">
+        <div class="user-chip">
+            <div class="avatar">
+                {% if app.user %}
+                    {{ (app.user.userIdentifier ?? 'A')|first|upper }}
+                {% else %}
+                    A
+                {% endif %}
+            </div>
+            <div class="user-info">
+                <p>{{ app.user ? app.user.userIdentifier : 'Admin' }}</p>
+                <span>Administrator</span>
+            </div>
+            <a href="{{ logout_path() }}" class="logout-icon" title="Logout">↩</a>
+        </div>
+    </div>
+</aside>
+
+<!-- ── Main ── -->
+<div class="main">
+
+    <header class="topbar">
+        <a href="{{ path('app_users') }}" class="topbar__back">← Back</a>
+        <div style="margin-left:.5rem;">
+            <div class="topbar__title">Add New User</div>
+            <div class="topbar__sub">Create a new platform account</div>
+        </div>
+    </header>
+
+    <div class="content">
+        <div class="form-card">
+
+            <div class="form-card__header">
+                <div class="icon-wrap">👤</div>
+                <h2>New Account</h2>
+                <p>Fill in the details below — the user will be saved to the database immediately.</p>
+            </div>
+
+            <div class="form-card__body">
+
+                {{ form_errors(registrationForm) }}
+
+                {{ form_start(registrationForm, {'attr': {'novalidate': 'novalidate'}}) }}
+
+                    {# --- ADD USERNAME--- #}
+                    {{ form_row(registrationForm.username, {
+                        'label': 'Username'
+                    }) }}
+                    
+                    {{ form_row(registrationForm.email, {
+                        'label': 'Email Address',
+                        'attr': { 'placeholder': 'user@example.com' }
+                    }) }}
+                
+                    {# --- ADD THE ROLES FIELD HERE --- #}
+                    {{ form_row(registrationForm.roles, {
+                        'label': 'User Role'
+                    }) }}
+
+                    {{ form_row(registrationForm.plainPassword, {
+                        'label': 'Password',
+                        'attr': { 'placeholder': '••••••••' }
+                    }) }}
+
+                    {# agreeTerms wrapped in our styled checkbox row #}
+                    <div class="checkbox-row">
+                        {{ form_widget(registrationForm.agreeTerms) }}
+                        {{ form_label(registrationForm.agreeTerms, 'I agree to the terms and conditions') }}
+                    </div>
+                    {{ form_errors(registrationForm.agreeTerms) }}
+
+                    <button type="submit" class="btn-submit">✅ Create User</button>
+
+                {{ form_end(registrationForm) }}
+
+            </div>
+
+            <div class="cancel-link">
+                Changed your mind? <a href="{{ path('app_users') }}">Go back to Users</a>
+            </div>
+
+        </div>
+    </div>
+
+</div>
+
+</body>
+</html>

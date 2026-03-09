@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AssureX – Settings</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/png" href="{{ asset('images/logo.png') }}">
+    <link rel="stylesheet" href="{{ asset('css/setting.css') }}">
+</head>
+<body>
+
+<!-- ── Sidebar ── -->
+<aside class="sidebar">
+    <div class="sidebar__brand">
+        <div class="brand-icon">🛡️</div>
+        <div class="brand-text"><h1>Assure<span>X</span></h1><p>Assurance Platform</p></div>
+    </div>
+    <nav class="sidebar__nav">
+        <div class="nav-section-label">Overview</div>
+        <a href="{{ path('app_dashboard') }}" class="nav-item"><span class="icon">📊</span> Dashboard</a>
+
+        <div class="nav-section-label">Management</div>
+        <a href="{{ path('app_users') }}" class="nav-item"><span class="icon">👤</span> Users</a>
+
+        <a href="{{ path('app_settings') }}" class="nav-item active"><span class="icon">⚙️</span> Settings</a>
+    </nav>
+    <div class="sidebar__footer">
+        <div class="user-chip">
+            <div class="avatar">{% if app.user %}{{ (app.user.userIdentifier ?? 'A')|first|upper }}{% else %}A{% endif %}</div>
+            <div class="user-info">
+                <p>{{ app.user ? app.user.userIdentifier : 'Admin' }}</p>
+                <span>Administrator</span>
+            </div>
+            <a href="{{ logout_path() }}" class="logout-icon" title="Logout">↩</a>
+        </div>
+    </div>
+</aside>
+
+<!-- ── Main ── -->
+<div class="main">
+    <header class="topbar">
+        <div>
+            <div class="topbar__title">Settings</div>
+            <div class="topbar__sub">Company information</div>
+        </div>
+        <div class="topbar__spacer"></div>
+        <button class="theme-toggle" id="themeToggle" title="Toggle theme">🌙</button>
+    </header>
+
+    <div class="content">
+
+        {% for message in app.flashes('success') %}
+            <div class="flash flash-success">✅ {{ message }}</div>
+        {% endfor %}
+        {% for message in app.flashes('error') %}
+            <div class="flash flash-error">⚠️ {{ message }}</div>
+        {% endfor %}
+
+        <div class="company-card" id="companyCard">
+
+            <div class="card-header">
+                <div class="card-header-left">
+                    <div class="company-logo">🏢</div>
+                    <div class="card-header-text">
+                        <h2 id="headerName">{{ settings.companyName ?? 'AssureX' }}</h2>
+                        <p><span class="lock-badge">🔒 Read only</span></p>
+                    </div>
+                </div>
+
+                <button class="btn-edit" id="editBtn" onclick="enterEdit()">
+                    ✏️ Edit
+                </button>
+
+                <div class="edit-actions" id="editActions">
+                    <button type="button" class="btn-cancel-edit" onclick="cancelEdit()">✖ Cancel</button>
+                    <button type="button" class="btn-save-edit" onclick="saveForm()">✔ Confirm</button>
+                </div>
+            </div>
+
+            <div class="card-divider"></div>
+
+            <form method="post" action="{{ path('app_settings_save') }}" id="settingsForm">
+                <input type="hidden" name="_token" value="{{ csrf_token('settings_company') }}">
+
+                <div class="fields-grid">
+
+                    <div class="field">
+                        <div class="field-label"><span class="f-icon">🏢</span> Company Name</div>
+                        <div class="field-value {{ not (settings.companyName ?? null) ? 'empty' : '' }}">{{ settings.companyName ?? '—' }}</div>
+                        <input class="field-input" type="text" name="company_name" value="{{ settings.companyName ?? '' }}" placeholder="AssureX Insurance">
+                    </div>
+
+                    <div class="field">
+                        <div class="field-label"><span class="f-icon">📋</span> Legal Registration No.</div>
+                        <div class="field-value {{ not (settings.regNumber ?? null) ? 'empty' : '' }}">{{ settings.regNumber ?? '—' }}</div>
+                        <input class="field-input" type="text" name="Number" value="{{ settings.regNumber ?? '' }}" placeholder="RC 123456">
+                    </div>
+
+                    <div class="field">
+                        <div class="field-label"><span class="f-icon">📧</span> Contact Email</div>
+                        <div class="field-value {{ not (settings.settings.contactEmail ?? null) ? 'empty' : '' }}">{{ settings.settings.contactEmail ?? '—' }}</div>
+                        <input class="field-input" type="email" name="contactEmail" value="{{ settings.settings.contactEmail ?? '' }}" placeholder="contact@assurex.ma">
+                    </div>
+
+                    <div class="field">
+                        <div class="field-label"><span class="f-icon">📞</span> Phone Number</div>
+                        <div class="field-value {{ not (settings.contactPhone ?? null) ? 'empty' : '' }}">{{ settings.contactPhone?? '—' }}</div>
+                        <input class="field-input" type="tel" name="contactPhone" value="{{ settings.contactPhone ?? '' }}" placeholder="+212 5XX XXX XXX">
+                    </div>
+
+                    <div class="field">
+                        <div class="field-label"><span class="f-icon">🏙️</span> City</div>
+                        <div class="field-value {{ not (settings.city ?? null) ? 'empty' : '' }}">{{ settings.city ?? '—' }}</div>
+                        <input class="field-input" type="text" name="city" value="{{ settings.city ?? '' }}" placeholder="Casablanca">
+                    </div>
+
+                    <div class="field">
+                        <div class="field-label"><span class="f-icon">🌐</span> Website</div>
+                        <div class="field-value {{ not (settings.website ?? null) ? 'empty' : '' }}">{{ settings.website ?? '—' }}</div>
+                        <input class="field-input" type="url" name="website" value="{{ settings.website ?? '' }}" placeholder="https://assurex.ma">
+                    </div>
+
+                    <div class="field field-full">
+                        <div class="field-label"><span class="f-icon">📍</span> Full Address</div>
+                        <div class="field-value {{ not (settings.address ?? null) ? 'empty' : '' }}" style="white-space:pre-line;">{{ settings.address ?? '—' }}</div>
+                        <textarea class="field-input" name="address" placeholder="123 Bd Mohammed V, Casablanca 20000, Maroc">{{ settings.address ?? '' }}</textarea>
+                    </div>
+
+                </div>
+            </form>
+
+        </div>
+    </div>
+</div>
+
+<div class="toast" id="toast">✅ Company information updated</div>
+
+<script>
+    const card = document.getElementById('companyCard');
+
+    function enterEdit() {
+        card.classList.add('editing');
+        document.querySelector('input[name="company_name"]').focus();
+    }
+
+    function cancelEdit() {
+        card.classList.remove('editing');
+        // Reset inputs to their original default values
+        document.querySelectorAll('.field-input').forEach(input => {
+            if (input.tagName === 'TEXTAREA') {
+                input.value = input.defaultValue;
+            } else {
+                input.value = input.defaultValue;
+            }
+        });
+    }
+
+    function saveForm() {
+        document.getElementById('settingsForm').submit();
+    }
+
+    // Theme toggle
+    const toggle = document.getElementById('themeToggle');
+    if (localStorage.getItem('theme') === 'light') { document.body.classList.add('light-mode'); toggle.textContent = '☀️'; }
+    toggle.addEventListener('click', () => {
+        document.body.classList.toggle('light-mode');
+        const isLight = document.body.classList.contains('light-mode');
+        toggle.textContent = isLight ? '☀️' : '🌙';
+        localStorage.setItem('theme', isLight ? 'light' : 'dark');
+    });
+
+    // Show toast after save
+    {% if app.flashes('success') is not empty %}
+    (function() {
+        const t = document.getElementById('toast');
+        t.classList.add('show');
+        setTimeout(() => t.classList.remove('show'), 3500);
+    })();
+    {% endif %}
+</script>
+
+</body>
+</html>

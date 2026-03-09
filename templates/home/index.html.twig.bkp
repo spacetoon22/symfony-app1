@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AssureX – Your Trusted Insurance Partner</title>
+    <link rel="stylesheet" href="{{ asset('css/home.css') }}">
+    <link rel="icon" type="image/png" href="{{ asset('images/logo.png') }}">
+
+</head>
+<body>
+
+    <!-- NAVBAR -->
+    <header class="navbar">
+        <div class="navbar__brand">
+            <span class="navbar__logo">🛡️</span>
+            <span class="navbar__name">AssureX</span>
+        </div>
+        <nav class="navbar__links">
+            <a href="{{ path('app_home') }}" class="nav-link active">Home</a>
+            <a href="#about" class="nav-link">About</a>
+            <a href="#services" class="nav-link">Services</a>
+            <a href="{{ path('app_login') }}" class="nav-link nav-link--cta">sign in</a>
+        </nav>
+        <button class="navbar__toggle" id="menuToggle">&#9776;</button>
+    </header>
+
+    <!-- MOBILE MENU -->
+    <div class="mobile-menu" id="mobileMenu">
+        <a href="{{ path('app_home') }}" class="nav-link">Home</a>
+        <a href="#about" class="nav-link">About</a>
+        <a href="#services" class="nav-link">Services</a>
+        <a href="{{ path('app_login') }}" class="nav-link nav-link--cta">sign in</a>
+    </div>
+
+    <!-- HERO SECTION -->
+    <main>
+        <section class="hero">
+            <div class="hero__content">
+                <h1 class="hero__title">Your Peace of Mind,<br><span>Our Priority</span></h1>
+                <p class="hero__subtitle">Comprehensive insurance solutions tailored to protect what matters most to you and your family.</p>
+                <div class="hero__actions">
+                    <a href="{{ path('app_login') }}" class="btn btn--primary">Get Started</a>
+                    <a href="#services" class="btn btn--outline">Our Services</a>
+                </div>
+            </div>
+            <div class="hero__graphic">
+                <div class="shield-icon">🛡️</div>
+            </div>
+        </section>
+
+        <!-- ABOUT SECTION -->
+        <section class="section" id="about">
+            <div class="section__inner">
+                <h2 class="section__title">About AssureX</h2>
+                <p class="section__text">
+                    AssureX has been protecting individuals, families, and businesses for over 20 years.
+                    We believe that everyone deserves reliable, transparent, and affordable coverage —
+                    backed by a team that genuinely cares about your future.
+                </p>
+                <div class="stats">
+                    <div class="stat">
+                        <span class="stat__number">20+</span>
+                        <span class="stat__label">Years Experience</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat__number">50K+</span>
+                        <span class="stat__label">Happy Clients</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat__number">99%</span>
+                        <span class="stat__label">Claims Resolved</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SERVICES SECTION -->
+        <section class="section section--alt" id="services">
+            <div class="section__inner">
+                <h2 class="section__title">Our Services</h2>
+                <div class="cards">
+                    <div class="card">
+                        <div class="card__icon">🏠</div>
+                        <h3>Home Insurance</h3>
+                        <p>Protect your home and belongings from unexpected events like fire, theft, and natural disasters.</p>
+                    </div>
+                    <div class="card">
+                        <div class="card__icon">🚗</div>
+                        <h3>Auto Insurance</h3>
+                        <p>Drive with confidence knowing you're covered for accidents, damage, and liability.</p>
+                    </div>
+                    <div class="card">
+                        <div class="card__icon">❤️</div>
+                        <h3>Life Insurance</h3>
+                        <p>Secure your family's financial future with flexible life coverage plans.</p>
+                    </div>
+                    <div class="card">
+                        <div class="card__icon">🏥</div>
+                        <h3>Health Insurance</h3>
+                        <p>Access quality healthcare without the financial stress with our comprehensive health plans.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="footer">
+        <p>&copy; {{ "now"|date("Y") }} AssureX. All rights reserved.</p>
+    </footer>
+
+    <script>
+        const toggle = document.getElementById('menuToggle');
+        const menu = document.getElementById('mobileMenu');
+        toggle.addEventListener('click', () => menu.classList.toggle('open'));
+    </script>
+
+</body>
+</html>
