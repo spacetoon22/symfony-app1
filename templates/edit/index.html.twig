@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AssureX – Edit User</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ asset('css/edit.css') }}">
+    <link rel="icon" type="image/png" href="{{ asset('images/logo.png') }}">
+
+</head>
+<body>
+
+<!-- ── Sidebar ── -->
+<aside class="sidebar">
+    <div class="sidebar__brand">
+        <div class="brand-icon">🛡️</div>
+        <div class="brand-text">
+            <h1>Assure<span>X</span></h1>
+            <p>Assurance Platform</p>
+        </div>
+    </div>
+
+    <nav class="sidebar__nav">
+        <div class="nav-section-label">Overview</div>
+        <a href="{{ path('app_dashboard') }}" class="nav-item">
+            <span class="icon">📊</span> Dashboard
+        </a>
+
+
+
+
+
+        <div class="nav-section-label">Management</div>
+        <a href="{{ path('app_users') }}" class="nav-item active">
+            <span class="icon">👤</span> Users
+        </a>
+
+        <a href="#" class="nav-item"><span class="icon">⚙️</span> Settings</a>
+    </nav>
+
+    <div class="sidebar__footer">
+        <div class="user-chip">
+            <div class="avatar">
+                {% if app.user %}
+                    {{ (app.user.userIdentifier ?? 'A')|first|upper }}
+                {% else %}
+                    A
+                {% endif %}
+            </div>
+            <div class="user-info">
+                <p>{{ app.user ? app.user.userIdentifier : 'Admin' }}</p>
+                <span>Administrator</span>
+            </div>
+            <a href="{{ logout_path() }}" class="logout-icon" title="Logout">↩</a>
+        </div>
+    </div>
+</aside>
+
+<!-- ── Main ── -->
+<div class="main">
+
+    <header class="topbar">
+        <a href="{{ path('app_users') }}" class="topbar__back">← Back</a>
+        <div style="margin-left:.5rem;">
+            <div class="topbar__title">Edit User</div>
+            <div class="topbar__sub">Change password for {{ user.email }}</div>
+        </div>
+    </header>
+
+    <div class="content">
+        <div class="form-card">
+
+            <!-- User info banner -->
+            <div class="user-banner">
+                <div class="banner-avatar">{{ user.email|first|upper }}</div>
+                <div class="banner-info">
+                    <p class="banner-email">{{ user.email }}</p>
+                    <span class="banner-role">
+                        {% if 'ROLE_ADMIN' in user.roles %}
+                            🛡️ Administrator
+                        {% elseif 'ROLE_COMMERCIAL' in user.roles %}
+                            💼 Commercial    
+                        {% else %}
+                            👤 User
+                        {% endif %}
+                    </span>
+                </div>
+                <div class="banner-id">#{{ user.id }}</div>
+            </div>
+
+            <!-- Flash messages -->
+            {% for message in app.flashes('success') %}
+                <div class="flash flash-success">✅ {{ message }}</div>
+            {% endfor %}
+            {% for message in app.flashes('error') %}
+                <div class="flash flash-error">⚠️ {{ message }}</div>
+            {% endfor %}
+
+            <div class="form-card__header">
+                <div class="icon-wrap">🔐</div>
+                <h2>Reset Password</h2>
+                <p>Set a new password for this user.</p>
+            </div>
+
+            <div class="form-card__body">
+                <form method="post" action="{{ path('app_edit', {id: user.id}) }}" id="passwordForm">
+                    <input type="hidden" name="_token" value="{{ csrf_token('edit_password' ~ user.id) }}">
+
+                   
+                    <!-- New password -->
+                    <div class="field-group">
+                        <label for="new_password">New Password</label>
+                        <div class="input-wrap">
+                            <span class="input-icon">🔑</span>
+                            <input type="password"
+                                   id="new_password"
+                                   name="new_password"
+                                   placeholder="Min. 8 characters"
+                                   required
+                                   minlength="8"
+                                   autocomplete="new-password"
+                                   oninput="checkStrength(this.value)">
+                            <button type="button" class="toggle-eye" data-target="new_password">👁</button>
+                        </div>
+                        <!-- Strength bar -->
+                        <div class="strength-bar">
+                            <div class="strength-fill" id="strengthFill"></div>
+                        </div>
+                        <div class="strength-label" id="strengthLabel"></div>
+                    </div>
+
+                    <!-- Confirm password -->
+                    <div class="field-group">
+                        <label for="confirm_password">Confirm New Password</label>
+                        <div class="input-wrap">
+                            <span class="input-icon">✅</span>
+                            <input type="password"
+                                   id="confirm_password"
+                                   name="confirm_password"
+                                   placeholder="Repeat new password"
+                                   required
+                                   autocomplete="new-password"
+                                   oninput="checkMatch()">
+                            <button type="button" class="toggle-eye" data-target="confirm_password">👁</button>
+                        </div>
+                        <div class="match-msg" id="matchMsg"></div>
+                    </div>
+
+                    <button type="submit" class="btn-submit" id="submitBtn">
+                        🔐 Update Password
+                    </button>
+                </form>
+            </div>
+
+            <div class="cancel-link">
+                <a href="{{ path('app_users') }}">← Cancel and go back</a>
+            </div>
+
+        </div>
+    </div>
+
+</div>
+
+<script>
+    // Show / hide password toggle
+    document.querySelectorAll('.toggle-eye').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const input = document.getElementById(btn.dataset.target);
+            input.type = input.type === 'password' ? 'text' : 'password';
+            btn.textContent = input.type === 'password' ? '👁' : '🙈';
+        });
+    });
+
+    // Password strength checker
+    function checkStrength(val) {
+        const fill  = document.getElementById('strengthFill');
+        const label = document.getElementById('strengthLabel');
+        let score = 0;
+        if (val.length >= 8)              score++;
+        if (/[A-Z]/.test(val))            score++;
+        if (/[0-9]/.test(val))            score++;
+        if (/[^A-Za-z0-9]/.test(val))     score++;
+
+        const levels = [
+            { pct: '0%',   color: 'transparent', text: '' },
+            { pct: '25%',  color: '#f87171',      text: 'Weak' },
+            { pct: '50%',  color: '#fbbf24',      text: 'Fair' },
+            { pct: '75%',  color: '#c9a84c',      text: 'Good' },
+            { pct: '100%', color: '#2dd4bf',      text: 'Strong 💪' },
+        ];
+        const lvl = levels[score];
+        fill.style.width = lvl.pct;
+        fill.style.background = lvl.color;
+        label.textContent = lvl.text;
+        label.style.color = lvl.color;
+    }
+
+    // Password match checker
+    function checkMatch() {
+        const np  = document.getElementById('new_password').value;
+        const cp  = document.getElementById('confirm_password').value;
+        const msg = document.getElementById('matchMsg');
+        if (!cp) { msg.textContent = ''; return; }
+        if (np === cp) {
+            msg.textContent = '✅ Passwords match';
+            msg.style.color = '#2dd4bf';
+        } else {
+            msg.textContent = '❌ Passwords do not match';
+            msg.style.color = '#f87171';
+        }
+    }
+</script>
+
+</body>
+</html>

@@ -1,0 +1,12 @@
+{% extends 'base.html.twig' %}
+
+{% block body %}
+<h1>Adults</h1>
+
+{% for person in persons %}
+    {{ person.name }} - {{ person.age }} <br>
+{% else %}
+    No adults found.
+{% endfor %}
+
+{% endblock %}

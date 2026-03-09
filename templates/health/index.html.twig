@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AssureX – Health Insurance Registration</title>
+    <link rel="stylesheet" href="{{ asset('css/health.css') }}">
+    <link rel="icon" type="image/png" href="{{ asset('images/logo.png') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+</head>
+<body>
+
+<!-- ── Sidebar ── -->
+<aside class="sidebar">
+    <div class="sidebar__brand">
+        <div class="brand-icon">🛡️</div>
+        <div class="brand-text"><h1>Assure<span>X</span></h1><p>Assurance Platform</p></div>
+    </div>
+    <nav class="sidebar__nav">
+
+        <div class="nav-section-label">Anssurances</div>
+        <a href="{{ path('app_health') }}" class="nav-item active"><span class="icon">❤️</span> Health Assurance</a>
+        <a href="{{ path('app_taxi') }}" class="nav-item"><span class="icon">🚖</span> Taxi Assurance</a>
+        <a href="#" class="nav-item"><span class="icon">🏠</span> Home Assurance</a>
+        <a href="#" class="nav-item"><span class="icon">🚗</span> Auto Assurance</a>
+
+    </nav>
+    <div class="sidebar__footer">
+        <div class="user-chip">
+            <div class="avatar">{% if app.user %}{{ (app.user.userIdentifier ?? 'A')|first|upper }}{% else %}A{% endif %}</div>
+            <div class="user-info"><p>{{ app.user ? app.user.userIdentifier : 'Agent' }}</p><span>Agent</span></div>
+        </div>
+    </div>
+</aside>
+
+<!-- ── Main ── -->
+<div class="main">
+    <header class="topbar">
+        <div class="topbar__title-wrap">
+            <div class="topbar__title" style="margin-left:.5rem;">
+                Health Insurance Registration
+            </div>
+            <div class="topbar__company-number">📞 +212 6 55 88 00 01</div>
+        </div>
+        <button class="theme-toggle" ...>🌙</button>
+    </header>
+
+    <div class="content">
+
+        {% if submitted is defined and submitted %}
+        <!-- ── Success screen ── -->
+        <div class="success-screen">
+            <div class="success-icon">✅</div>
+            <h2>Dossier Submitted Successfully!</h2>
+            <p>The client's health insurance dossier has been recorded and is now <strong>pending review</strong> by the commercial team.</p>
+            <div class="success-steps">
+                <div class="ss-step done">
+                    <span class="ss-circle">✓</span>
+                    <span>Client Info Saved</span>
+                </div>
+                <div class="ss-line done"></div>
+                <div class="ss-step active">
+                    <span class="ss-circle">2</span>
+                    <span>Commercial Review</span>
+                </div>
+                <div class="ss-line"></div>
+                <div class="ss-step">
+                    <span class="ss-circle">3</span>
+                    <span>Admin Validation</span>
+                </div>
+                <div class="ss-line"></div>
+                <div class="ss-step">
+                    <span class="ss-circle">✓</span>
+                    <span>Approved</span>
+                </div>
+            </div>
+            <div class="success-actions">
+                <a href="{{ path('app_health') }}" class="btn-new">➕ Submit Another Dossier</a>
+                
+            </div>
+        </div>
+
+        {% else %}
+
+        {% for message in app.flashes('error') %}
+            <div class="flash flash-error">⚠️ {{ message }}</div>
+        {% endfor %}
+
+        <!-- Stepper -->
+        <div class="stepper">
+            <div class="step active">
+                <div class="step-circle">1</div>
+                <div class="step-label">Client Info</div>
+            </div>
+            <div class="step-line"></div>
+            <div class="step">
+                <div class="step-circle">2</div>
+                <div class="step-label">Commercial Review</div>
+            </div>
+            <div class="step-line"></div>
+            <div class="step">
+                <div class="step-circle">3</div>
+                <div class="step-label">Admin Validation</div>
+            </div>
+            <div class="step-line"></div>
+            <div class="step">
+                <div class="step-circle">✓</div>
+                <div class="step-label">Approved</div>
+            </div>
+        </div>
+
+        <form method="post" action="{{ path('app_health') }}" enctype="multipart/form-data">
+            <input type="hidden" name="_token" value="{{ csrf_token('health_registration') }}">
+
+            <div class="form-grid">
+
+                <!-- Section 1: Personal Info -->
+                <div class="form-section">
+                    <div class="section-head">
+                        <span class="s-icon">👤</span>
+                        <div><h3>Personal Information</h3><p>Client identity details</p></div>
+                    </div>
+                    <div class="section-body">
+                        <div class="field-row">
+                            <div class="field">
+                                <label>First Name <span class="req">*</span></label>
+                                <input type="text" name="first_name" placeholder="Karim" required>
+                            </div>
+                            <div class="field">
+                                <label>Last Name <span class="req">*</span></label>
+                                <input type="text" name="last_name" placeholder="Benali" required>
+                            </div>
+                        </div>
+                        <div class="field">
+                            <label>Date of Birth <span class="req">*</span></label>
+                            <input type="date" name="dob" required>
+                        </div>
+                        <div class="field">
+                            <label>National ID / CIN <span class="req">*</span></label>
+                            <input type="text" name="cin" placeholder="AB123456" required>
+                        </div>
+                        <div class="field">
+                            <label>Gender</label>
+                            <select name="gender">
+                                <option value="">Select…</option>
+                                <option value="male">Male</option>
+                                <option value="female">Female</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section 2: Contact -->
+                <div class="form-section">
+                    <div class="section-head">
+                        <span class="s-icon">📞</span>
+                        <div><h3>Contact Details</h3><p>How to reach the client</p></div>
+                    </div>
+                    <div class="section-body">
+                        <div class="field">
+                            <label>Email Address <span class="req">*</span></label>
+                            <input type="email" name="email" placeholder="client@example.com" required>
+                        </div>
+                        <div class="field">
+                            <label>Phone Number <span class="req">*</span></label>
+                            <input type="tel" name="phone" placeholder="+212 6XX XXX XXX" required>
+                        </div>
+                        <div class="field">
+                            <label>City</label>
+                            <input type="text" name="city" placeholder="Casablanca">
+                        </div>
+                        <div class="field">
+                            <label>Full Address</label>
+                            <textarea name="address" placeholder="Street, district…"></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section 3: Health Coverage -->
+                <div class="form-section">
+                    <div class="section-head">
+                        <span class="s-icon">❤️</span>
+                        <div><h3>Health Coverage Details</h3><p>Plan and medical information</p></div>
+                    </div>
+                    <div class="section-body">
+                        <div class="field-row triple">
+                            <div class="field">
+                                <label>Coverage Plan <span class="req">*</span></label>
+                                <select name="plan" required>
+                                    <option value="">Select plan…</option>
+                                    <option value="basic">Basic</option>
+                                    <option value="standard">Standard</option>
+                                    <option value="premium">Premium</option>
+                                    <option value="family">Family</option>
+                                </select>
+                            </div>
+                            <div class="field">
+                                <label>Start Date <span class="req">*</span></label>
+                                <input type="date" name="start_date" required>
+                            </div>
+                            <div class="field">
+                                <label>Number of Beneficiaries</label>
+                                <input type="number" name="beneficiaries" min="1" max="20" placeholder="1">
+                            </div>
+                        </div>
+                        <div class="field-row">
+                            <div class="field">
+                                <label>Pre-existing Conditions</label>
+                                <select name="conditions">
+                                    <option value="none">None</option>
+                                    <option value="diabetes">Diabetes</option>
+                                    <option value="hypertension">Hypertension</option>
+                                    <option value="cardiac">Cardiac</option>
+                                    <option value="other">Other</option>
+                                </select>
+                            </div>
+                            <div class="field">
+                                <label>Monthly Premium (MAD)</label>
+                                <input type="number" name="premium" placeholder="350" min="0">
+                            </div>
+                        </div>
+                        <div class="field">
+                            <label>Medical Notes</label>
+                            <textarea name="medical_notes" placeholder="Any relevant medical history or notes…"></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section 4: Documents -->
+                <div class="form-section">
+
+                <!-- Section 5: Commercial Assignment -->
+                        <div class="form-section">
+                            <div class="section-head">
+                                <span class="s-icon">👔</span>
+                                <div><h3>Assign to Commercial</h3><p>The commercial who will handle this dossier</p></div>
+                            </div>
+                            <div class="section-body">
+                                <div class="field">
+                                    <label>Commercial Email <span class="req">*</span></label>
+                                    <input 
+                                        type="email" 
+                                        name="commercial_email" 
+                                        placeholder="Hana@gmail.ma" 
+                                        required
+                                    >   
+                                    <small style="color:var(--text-muted, #888); margin-top:.3rem; display:block;">
+                                        Enter the email of the commercial this client spoke with.
+                                    </small>
+                                </div>
+                            </div>
+                    </div>
+
+
+                <!-- Submit row -->
+                <div class="submit-row">
+                    <a href="{{ path('app_dashboard') }}" class="btn-cancel">Cancel</a>
+                    <button type="submit" class="btn-submit">📋 Submit Dossier to Prospects →</button>
+                </div>
+
+            </div>{# /form-grid #}
+        </form>
+
+        {% endif %}{# end submitted check #}
+
+    </div>{# /content #}
+</div>{# /main #}
+
+<script>
+    // Theme toggle
+    const toggle = document.getElementById('themeToggle');
+    if (localStorage.getItem('theme') === 'light') { document.body.classList.add('light-mode'); toggle.textContent = '☀️'; }
+    toggle.addEventListener('click', () => {
+        document.body.classList.toggle('light-mode');
+        const isLight = document.body.classList.contains('light-mode');
+        toggle.textContent = isLight ? '☀️' : '🌙';
+        localStorage.setItem('theme', isLight ? 'light' : 'dark');
+    });
+
+    // File upload label update
+    document.querySelector('input[type="file"]').addEventListener('change', function() {
+        const p = this.closest('.file-upload-area').querySelector('p');
+        p.innerHTML = `<strong style="color:var(--green)">${this.files.length} file(s) selected</strong>`;
+    });
+</script>
+</body>
+</html>

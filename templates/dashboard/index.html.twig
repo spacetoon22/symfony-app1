@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AssureX – Dashboard</title>
+    <link rel="stylesheet" href="{{ asset('css/dash.css') }}">
+    <link rel="icon" type="image/png" href="{{ asset('images/logo.png') }}">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+    
+</head>
+
+<body>
+
+    <!-- ═══════════════════════════════
+         SIDEBAR
+    ═══════════════════════════════ -->
+    <aside class="sidebar">
+        <div class="sidebar__brand">
+            <div class="brand-icon">🛡️</div>
+            <div class="brand-text">
+                <h1>Assure<span>X</span></h1>
+                <p>Assurance Platform</p>
+            </div>
+        </div>
+
+        <nav class="sidebar__nav">
+            <div class="nav-section-label">Overview</div>
+            <a href="#" class="nav-item active">
+                <span class="icon">📊</span> Dashboard
+            </a>
+
+
+
+            <a href="{{ path('app_pros') }}" class="nav-item">
+                <span class="icon">📋</span> Prospects
+                <span class="badge red">0</span>
+            </a>
+
+
+
+
+            <div class="nav-section-label">Management</div>
+            {# ✅ Fixed #}
+            <a href="{{ path('app_users') }}" class="nav-item">
+                <span class="icon">👤</span> Users
+
+            <a href="{{ path('app_settings') }}" class="nav-item">
+                <span class="icon">⚙️</span> Settings
+            </a>
+        </nav>
+
+        <div class="sidebar__footer">
+            <div class="user-chip">
+                <div class="avatar">{{ (app.user.userIdentifier ?? 'A')|first|upper }}</div>
+
+                <div class="user-info">
+                    <p>{{ app.user.userIdentifier ?? 'Admin' }}</p>
+                    <span>Administrator</span>
+                </div>
+                <a href="{{ logout_path() }}" class="logout-icon" title="Logout">↩</a>
+            </div>
+        </div>
+    </aside>
+
+    <!-- ═══════════════════════════════
+         MAIN
+    ═══════════════════════════════ -->
+    <div class="main">
+
+        <!-- Topbar -->
+        <header class="topbar">
+            <div>
+                <div class="topbar__title">Dashboard</div>
+                <div class="topbar__sub" id="currentDate"></div>
+            </div>
+            <div class="topbar__spacer"></div>            
+            <button class="theme-toggle" id="themeToggle" title="Toggle theme">🌙</button>
+
+        </header>
+        <div class="panel" style="animation-delay:.2s">
+            <div class="panel__head">
+                <div>
+                    <h3>💰 Premium Revenue</h3>
+                    <div class="sub">Approved dossiers only</div>
+                </div>
+                <span class="kpi-trend trend-up" style="font-size:.78rem;padding:.3rem .7rem;border-radius:20px;">
+                    {{ totalPremium|number_format(0, '.', ',') }} MAD
+                </span>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Commercial</th>
+                        <th style="text-align:right">Revenue</th>
+                        <th style="text-align:right">Share</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for name, amount in premiumByCommercial %}
+                    <tr>
+                        <td>
+                            <div class="client-name">{{ name }}</div>
+                        </td>
+                        <td style="text-align:right; color:var(--gold); font-weight:600;">
+                            {{ amount|number_format(0, '.', ',') }} MAD
+                        </td>
+                        <td style="text-align:right;">
+                            <div style="display:flex;align-items:center;justify-content:flex-end;gap:.5rem;">
+                                <div style="width:80px;height:5px;border-radius:3px;background:rgba(255,255,255,.08);">
+                                    <div style="width:{{ totalPremium > 0 ? ((amount / totalPremium) * 100)|round : 0 }}%;height:100%;border-radius:3px;background:var(--gold);"></div>
+                                </div>
+                                <span style="font-size:.75rem;color:var(--slate);min-width:35px;">
+                                    {{ totalPremium > 0 ? ((amount / totalPremium) * 100)|round : 0 }}%
+                                </span>
+                            </div>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="3" style="text-align:center;color:var(--slate);padding:1.5rem;">
+                            No approved dossiers yet
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            <!-- Total row -->
+            <div style="padding:.9rem 1.4rem;border-top:1px solid rgba(201,168,76,.15);display:flex;justify-content:space-between;align-items:center;">
+                <span style="font-size:.78rem;text-transform:uppercase;letter-spacing:.06em;color:var(--slate);">Total</span>
+                <span style="font-family:'Playfair Display',serif;font-size:1.2rem;color:var(--white);">
+                    {{ totalPremium|number_format(0, '.', ',') }} MAD
+                </span>
+            </div>
+        </div>
+    </div>
+    <!-- /main -->
+    <script>
+        const toggle = document.getElementById('themeToggle');
+        // Remember preference across pages
+        if (localStorage.getItem('theme') === 'light') {
+            document.body.classList.add('light-mode');
+            toggle.textContent = '☀️';
+        }
+        toggle.addEventListener('click', () => {
+            document.body.classList.toggle('light-mode');
+            const isLight = document.body.classList.contains('light-mode');
+            toggle.textContent = isLight ? '☀️' : '🌙';
+            localStorage.setItem('theme', isLight ? 'light' : 'dark');
+        });
+
+        function updateDateTime() {
+            const now = new Date();
+
+            const options = {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        };
+
+        const formattedDate = now.toLocaleDateString('en-US', options);
+
+        document.getElementById('currentDate').textContent = formattedDate;
+        }
+
+        // Run once on load
+        updateDateTime();
+
+        // If you also want it to auto-update every minute:
+        setInterval(updateDateTime, 60000);
+    </script>
+</body>
+</html>

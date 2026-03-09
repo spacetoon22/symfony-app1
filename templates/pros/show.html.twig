@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AssureX – Dossier #{{ dossier.id }}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ asset('css/pros_show.css') }}">
+    <link rel="icon" type="image/png" href="{{ asset('images/logo.png') }}">
+
+</head>
+<body>
+
+<!-- ── Sidebar ── -->
+<aside class="sidebar">
+    <div class="sidebar__brand">
+        <div class="brand-icon">🛡️</div>
+        <div class="brand-text"><h1>Assure<span>X</span></h1><p>Assurance Platform</p></div>
+    </div>
+    <nav class="sidebar__nav">
+        <div class="nav-section-label">Overview</div>
+        <a href="{{ path('app_dashboard') }}" class="nav-item"><span class="icon">📊</span> Dashboard</a>
+        <div class="nav-section-label">Clients</div>
+        <a href="{{ path('app_pros') }}" class="nav-item active"><span class="icon">📋</span> Prospects</a>
+        <div class="nav-section-label">Policies</div>
+        <a href="{{ path('app_health') }}" class="nav-item"><span class="icon">❤️</span> Health Assurance</a>
+        <a href="#" class="nav-item"><span class="icon">🚖</span> Taxi Assurance</a>
+        <a href="#" class="nav-item"><span class="icon">🏠</span> Home Assurance</a>
+        <a href="#" class="nav-item"><span class="icon">🚗</span> Auto Assurance</a>
+
+    </nav>
+    <div class="sidebar__footer">
+        <div class="user-chip">
+            <div class="avatar">{% if app.user %}{{ (app.user.userIdentifier ?? 'A')|first|upper }}{% else %}A{% endif %}</div>
+            <div class="user-info">
+                <p>{{ app.user ? app.user.userIdentifier : 'Commercial' }}</p>
+                <span>{% if is_granted('ROLE_ADMIN') %}Administrator{% else %}Commercial{% endif %}</span>
+            </div>
+            <a href="{{ logout_path() }}" class="logout-icon" title="Logout">↩</a>
+        </div>
+    </div>
+</aside>
+
+<!-- ── Main ── -->
+<div class="main">
+    <header class="topbar">
+        <a href="{{ path('app_pros') }}" class="topbar__back">← Back to Prospects</a>
+        <div style="margin-left:.5rem;">
+            <div class="topbar__title">Dossier #{{ dossier.id }}</div>
+            <div class="topbar__sub">{{ dossier.firstName }} {{ dossier.lastName }} — {{ (dossier.plan ?? 'N/A')|capitalize }} Plan</div>
+        </div>
+        <div class="topbar__spacer"></div>
+        <button class="theme-toggle" id="themeToggle" title="Toggle theme">🌙</button>
+    </header>
+
+    <div class="content">
+
+        {% for message in app.flashes('success') %}
+            <div class="flash flash-success">✅ {{ message }}</div>
+        {% endfor %}
+        {% for message in app.flashes('error') %}
+            <div class="flash flash-error">⚠️ {{ message }}</div>
+        {% endfor %}
+
+        {# Rejection banner #}
+        {% if dossier.status == 'rejected' and dossier.rejectionNote %}
+        <div class="rejection-banner">
+            <div class="rb-icon">⚠️</div>
+            <div>
+                <h4>Admin Feedback — Action Required</h4>
+                <p>{{ dossier.rejectionNote }}</p>
+            </div>
+        </div>
+        {% endif %}
+
+        {# Status bar #}
+        <div class="status-bar">
+            <div class="client-hero">
+                <div class="hero-avatar">{{ dossier.firstName|first|upper }}</div>
+                <div>
+                    <div class="hero-name">{{ dossier.firstName }} {{ dossier.lastName }}</div>
+                    <div class="hero-ref">Ref #{{ dossier.id }} · Submitted {{ dossier.createdAt|date('d M Y, H:i') }}</div>
+                </div>
+            </div>
+            <span class="status-pill pill-{{ dossier.status }}">
+                {% if dossier.status == 'pending' %}⏳ Pending
+                {% elseif dossier.status == 'claimed' %}🤝 In Progress
+                {% elseif dossier.status == 'review' %}🔎 Admin Review
+                {% elseif dossier.status == 'approved' %}✅ Approved
+                {% elseif dossier.status == 'rejected' %}❌ Rejected
+                {% endif %}
+            </span>
+        </div>
+
+        {# Stepper #}
+        <div class="stepper">
+            <div class="step {{ dossier.status in ['pending','claimed','review','approved','rejected'] ? 'done' : '' }}">
+                <div class="step-circle">✓</div>
+                <div class="step-label">Submitted</div>
+            </div>
+            <div class="step-line {{ dossier.status in ['claimed','review','approved','rejected'] ? 'done' : '' }}"></div>
+            <div class="step {{ dossier.status in ['claimed','review','approved','rejected'] ? 'done' : '' }} {{ dossier.status == 'pending' ? 'active' : '' }}">
+                <div class="step-circle">{{ dossier.status in ['claimed','review','approved','rejected'] ? '✓' : '2' }}</div>
+                <div class="step-label">Commercial</div>
+            </div>
+            <div class="step-line {{ dossier.status in ['review','approved','rejected'] ? 'done' : '' }}"></div>
+            <div class="step {{ dossier.status in ['review','approved','rejected'] ? 'active' : '' }} {{ dossier.status == 'approved' ? 'done' : '' }}">
+                <div class="step-circle">{{ dossier.status == 'approved' ? '✓' : '3' }}</div>
+                <div class="step-label">Admin Review</div>
+            </div>
+            <div class="step-line {{ dossier.status == 'approved' ? 'done' : '' }}"></div>
+            <div class="step {{ dossier.status == 'approved' ? 'done' : '' }}">
+                <div class="step-circle">{{ dossier.status == 'approved' ? '✓' : '4' }}</div>
+                <div class="step-label">Approved</div>
+            </div>
+        </div>
+
+        {# Claimed by #}
+        {% if dossier.claimedBy %}
+        <div class="claimed-card">
+            <div class="cc-icon">🤝</div>
+            <p>This dossier is being handled by <strong>{{ dossier.claimedBy.email }}</strong></p>
+        </div>
+        {% endif %}
+
+        {# Detail grid #}
+        <div class="detail-grid">
+
+            {# Personal info #}
+            <div class="info-card">
+                <div class="card-head"><span class="ch-icon">👤</span><h3>Personal Information</h3></div>
+                <div class="card-body">
+                    <div class="info-row"><span class="info-label">Full Name</span><span class="info-value">{{ dossier.firstName }} {{ dossier.lastName }}</span></div>
+                    <div class="info-row"><span class="info-label">CIN</span><span class="info-value {{ dossier.cin ? '' : 'empty' }}">{{ dossier.cin ?? '—' }}</span></div>
+                    <div class="info-row"><span class="info-label">Date of Birth</span><span class="info-value {{ dossier.dob ? '' : 'empty' }}">{{ dossier.dob ? dossier.dob|date('d M Y') : '—' }}</span></div>
+                    <div class="info-row"><span class="info-label">Gender</span><span class="info-value {{ dossier.gender ? '' : 'empty' }}">{{ dossier.gender ? dossier.gender|capitalize : '—' }}</span></div>
+                </div>
+            </div>
+
+            {# Contact info #}
+            <div class="info-card">
+                <div class="card-head"><span class="ch-icon">📞</span><h3>Contact Details</h3></div>
+                <div class="card-body">
+                    <div class="info-row"><span class="info-label">Email</span><span class="info-value">{{ dossier.email }}</span></div>
+                    <div class="info-row"><span class="info-label">Phone</span><span class="info-value {{ dossier.phone ? '' : 'empty' }}">{{ dossier.phone ?? '—' }}</span></div>
+                    <div class="info-row"><span class="info-label">City</span><span class="info-value {{ dossier.city ? '' : 'empty' }}">{{ dossier.city ?? '—' }}</span></div>
+                    <div class="info-row"><span class="info-label">Address</span><span class="info-value {{ dossier.address ? '' : 'empty' }}">{{ dossier.address ?? '—' }}</span></div>
+                </div>
+            </div>
+
+            {# Coverage info #}
+            <div class="info-card">
+                <div class="card-head">
+                    <span class="ch-icon">
+                        {% if dossier.type == 'taxi' %}🚖
+                        {% elseif dossier.type == 'home' %}🏠
+                        {% elseif dossier.type == 'auto' %}🚗
+                        {% else %}❤️
+                        {% endif %}
+                    </span>
+                    <h3>
+                        {% if dossier.type == 'taxi' %}Taxi Coverage
+                        {% elseif dossier.type == 'home' %}Home Coverage
+                        {% elseif dossier.type == 'auto' %}Auto Coverage
+                        {% else %}Health Coverage
+                        {% endif %}
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <div class="info-row"><span class="info-label">Plan</span><span class="info-value {{ dossier.plan ? '' : 'empty' }}">{{ dossier.plan ? dossier.plan|capitalize : '—' }}</span></div>
+                    <div class="info-row"><span class="info-label">Start Date</span><span class="info-value {{ dossier.startDate ? '' : 'empty' }}">{{ dossier.startDate ? dossier.startDate|date('d M Y') : '—' }}</span></div>
+                    <div class="info-row"><span class="info-label">Beneficiaries</span><span class="info-value {{ dossier.beneficiaries ? '' : 'empty' }}">{{ dossier.beneficiaries ?? '—' }}</span></div>
+                    <div class="info-row"><span class="info-label">Pre-existing</span><span class="info-value {{ dossier.conditions ? '' : 'empty' }}">{{ dossier.conditions ? dossier.conditions|capitalize : '—' }}</span></div>
+                    <div class="info-row"><span class="info-label">Monthly Premium</span><span class="info-value {{ dossier.premium ? '' : 'empty' }}">{{ dossier.premium ? dossier.premium ~ ' MAD' : '—' }}</span></div>
+                </div>
+            </div>
+
+            {# Notes #}
+            <div class="info-card">
+                <div class="card-head">
+                    <span class="ch-icon">
+                        {% if dossier.type == 'taxi' %}🚖
+                        {% elseif dossier.type == 'home' %}🏠
+                        {% elseif dossier.type == 'auto' %}🔧
+                        {% else %}🏥
+                        {% endif %}
+                    </span>
+                    <h3>
+                        {% if dossier.type == 'taxi' %}Vehicle Notes
+                        {% elseif dossier.type == 'home' %}Property Notes
+                        {% elseif dossier.type == 'auto' %}Vehicle Notes
+                        {% else %}Medical Notes
+                        {% endif %}
+                    </h3>
+                </div>
+            </div>
+            {# Documents #}
+            <div class="info-card full">
+                <div class="card-head"><span class="ch-icon">📎</span><h3>Documents Checklist</h3></div>
+                <div class="doc-grid">
+                    {% set allDocs = {'cin': '🪪 National ID', 'photo': '📸 Recent Photo', 'medical': '🏥 Medical Certificate', 'salary': '💰 Proof of Income', 'family': '👨‍👩‍👧 Family Book', 'contract': '📄 Signed Contract'} %}
+                    {% for key, label in allDocs %}
+                        {% if key in dossier.documents %}
+                            <div class="doc-chip ok"><span class="dc-icon">✅</span> {{ label }}</div>
+                        {% else %}
+                            <div class="doc-chip missing"><span class="dc-icon">❌</span> {{ label }}</div>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+
+            {# Uploaded files #}
+            {# Uploaded files #}
+            <div class="info-card full">
+                <div class="card-head"><span class="ch-icon">📁</span><h3>Uploaded Files</h3></div>
+    
+                {# Show existing files #}
+                {% if dossier.uploadedFiles is defined and dossier.uploadedFiles|length > 0 %}
+                    <div class="files-grid" style="padding: 1rem 1.3rem;">
+                        {% for filename in dossier.uploadedFiles %}
+                            {% set ext = filename|split('.')|last|lower %}
+                            <a href="/uploads/dossiers/{{ filename }}" target="_blank" class="file-chip">
+                                <span class="file-icon">
+                                    {% if ext in ['jpg','jpeg','png','gif'] %}🖼️
+                                    {elseif ext == 'pdf' %}📄
+                                    {% else %}📎
+                                    {% endif %}
+                                </span>
+                                <span class="file-name">{{ filename|split('_')|slice(2)|join('_') }}</span>
+                                <span class="file-dl">⬇</span>
+                            </a>
+                        {% endfor %}
+                    <div>
+                {% else %}
+                    <div class="notes-box empty" style="margin:1rem 1.3rem;">No files uploaded yet.</div>
+                {% endif %}
+
+                {# Upload form — commercial only #}
+                {% if not is_granted('ROLE_ADMIN') and dossier.assignedTo == app.user %}
+                <div style="padding: 1rem 1.3rem; border-top: 1px solid rgba(201,168,76,.08);">
+                    <form method="post" action="{{ path('app_pros_upload', {id: dossier.id}) }}" enctype="multipart/form-data">
+                        <input type="hidden" name="_token" value="{{ csrf_token('upload_' ~ dossier.id) }}">
+                        <label style="font-size:.8rem; color:var(--slate); display:block; margin-bottom:.5rem;">Upload Documents (PDF / Images)</label>
+                        <div class="file-upload-area" style="padding:1rem; text-align:center; border:2px dashed rgba(201,168,76,.2); border-radius:10px; cursor:pointer;">
+                            <input type="file" name="files[]" multiple accept=".pdf,.jpg,.jpeg,.png" style="display:none;" id="fileInput">
+                            <div onclick="document.getElementById('fileInput').click()">
+                                <div style="font-size:1.5rem;">📁</div>
+                                <p style="font-size:.82rem; color:var(--slate); margin-top:.3rem;">Click to browse — PDF, JPG, PNG</p>
+                                <p id="fileLabel" style="font-size:.78rem; color:var(--gold); margin-top:.2rem;"></p>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn-review" style="margin-top:.8rem; width:100%;">⬆️ Upload Files</button>
+                    </form>
+                </div>
+                {% endif %}
+            </div>
+
+        </div>{# /detail-grid #}
+
+        {# Action buttons #}
+        <div class="action-row">
+            <a href="{{ path('app_pros') }}" class="btn-back">← Back to List</a>
+
+            {# Commercial actions #}
+            {% if not is_granted('ROLE_ADMIN') %}
+                {% if dossier.status == 'pending' %}
+                    <form method="post" action="{{ path('app_pros_claim', {id: dossier.id}) }}">
+                        <input type="hidden" name="_token" value="{{ csrf_token('claim_' ~ dossier.id) }}">
+                        <button type="submit" class="btn-claim">🤝 Claim This Dossier</button>
+                    </form>
+                {% elseif dossier.status == 'claimed' and dossier.claimedBy == app.user %}
+                    <form method="post" action="{{ path('app_pros_submit_review', {id: dossier.id}) }}">
+                        <input type="hidden" name="_token" value="{{ csrf_token('review_' ~ dossier.id) }}">
+                        <button type="submit" class="btn-review">📤 Send to Admin Review</button>
+                    </form>
+                {% endif %}
+            {% endif %}
+
+            {# Admin actions #}
+            {% if is_granted('ROLE_ADMIN') and dossier.status == 'review' %}
+                <form method="post" action="{{ path('app_pros_approve', {id: dossier.id}) }}">
+                    <input type="hidden" name="_token" value="{{ csrf_token('approve_' ~ dossier.id) }}">
+                    <button type="submit" class="btn-approve">✅ Approve Dossier</button>
+                </form>
+                <button class="btn-reject" onclick="openRejectModal()">❌ Reject with Note</button>
+            {% endif %}
+        </div>
+
+    </div>{# /content #}
+</div>{# /main #}
+
+{# Reject modal #}
+<div class="modal-overlay" id="rejectModal">
+    <div class="modal">
+        <h3>❌ Reject Dossier</h3>
+        <p>Tell the commercial exactly what is missing or needs correction.</p>
+        <form method="post" action="{{ path('app_pros_reject', {id: dossier.id}) }}">
+            <input type="hidden" name="_token" value="{{ csrf_token('reject_' ~ dossier.id) }}">
+            <textarea name="rejection_note" placeholder="e.g. Medical certificate is missing, CIN photo is unclear…" required></textarea>
+            <div class="modal-actions">
+                <button type="button" class="btn-modal-cancel" onclick="closeRejectModal()">Cancel</button>
+                <button type="submit" class="btn-modal-send">Send Feedback</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    // Theme toggle
+    const toggle = document.getElementById('themeToggle');
+    if (localStorage.getItem('theme') === 'light') { document.body.classList.add('light-mode'); toggle.textContent = '☀️'; }
+    toggle.addEventListener('click', () => {
+        document.body.classList.toggle('light-mode');
+        const isLight = document.body.classList.contains('light-mode');
+        toggle.textContent = isLight ? '☀️' : '🌙';
+        localStorage.setItem('theme', isLight ? 'light' : 'dark');
+    });
+
+    function openRejectModal()  { document.getElementById('rejectModal').classList.add('open'); }
+    function closeRejectModal() { document.getElementById('rejectModal').classList.remove('open'); }
+    document.getElementById('rejectModal').addEventListener('click', function(e) {
+        if (e.target === this) closeRejectModal();
+    });
+    document.getElementById('fileInput')?.addEventListener('change', function() {
+        document.getElementById('fileLabel').textContent = this.files.length + ' file(s) selected';
+    });
+</script>
+
+</body>
+</html>

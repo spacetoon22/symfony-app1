@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AssureX – Health Insurance Registration</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        :root {
+            --navy:    #0d1b2a;
+            --deep:    #112240;
+            --panel:   #0f2035;
+            --gold:    #c9a84c;
+            --gold-lt: #e8c97a;
+            --slate:   #8892b0;
+            --light:   #ccd6f6;
+            --white:   #f0f4ff;
+            --green:   #2dd4bf;
+            --red:     #f87171;
+            --amber:   #fbbf24;
+            --sidebar-w: 240px;
+            --topbar-h:  64px;
+        }
+        html, body { height: 100%; font-family: 'DM Sans', sans-serif; background: var(--navy); color: var(--light); display: flex; overflow: hidden; }
+
+        /* ── Sidebar ── */
+        .sidebar { width: var(--sidebar-w); min-height: 100vh; background: var(--deep); border-right: 1px solid rgba(201,168,76,.12); display: flex; flex-direction: column; flex-shrink: 0; z-index: 20; }
+        .sidebar__brand { padding: 1.5rem 1.4rem 1.2rem; border-bottom: 1px solid rgba(201,168,76,.1); display: flex; align-items: center; gap: .75rem; }
+        .brand-icon { width: 38px; height: 38px; background: linear-gradient(135deg, #1a4f8a, #0d2f5c); border: 1.5px solid rgba(201,168,76,.4); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; }
+        .brand-text h1 { font-family: 'Playfair Display', serif; font-size: 1.15rem; color: var(--white); line-height: 1; }
+        .brand-text span { color: var(--gold); }
+        .brand-text p { font-size: .68rem; color: var(--slate); margin-top: .15rem; text-transform: uppercase; letter-spacing: .06em; }
+        .sidebar__nav { flex: 1; padding: 1.2rem 0; overflow-y: auto; }
+        .nav-section-label { font-size: .65rem; text-transform: uppercase; letter-spacing: .1em; color: var(--slate); padding: .6rem 1.4rem .3rem; opacity: .7; }
+        .nav-item { display: flex; align-items: center; gap: .75rem; padding: .65rem 1.4rem; color: var(--slate); text-decoration: none; font-size: .88rem; border-left: 3px solid transparent; transition: background .2s, color .2s, border-color .2s; }
+        .nav-item:hover { background: rgba(201,168,76,.06); color: var(--light); }
+        .nav-item.active { background: rgba(201,168,76,.1); color: var(--gold); border-left-color: var(--gold); font-weight: 500; }
+        .nav-item .icon { font-size: 1rem; width: 20px; text-align: center; }
+        .badge { margin-left: auto; background: var(--gold); color: var(--navy); font-size: .65rem; font-weight: 700; padding: .1rem .4rem; border-radius: 20px; }
+        .badge.red { background: var(--red); color: #fff; }
+        .sidebar__footer { padding: 1rem 1.2rem; border-top: 1px solid rgba(201,168,76,.1); }
+        .user-chip { display: flex; align-items: center; gap: .7rem; padding: .55rem .7rem; border-radius: 10px; background: rgba(255,255,255,.04); }
+        .avatar { width: 34px; height: 34px; border-radius: 50%; background: linear-gradient(135deg, var(--gold), #7a5c1e); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: .85rem; color: var(--navy); flex-shrink: 0; }
+        .user-info p { font-size: .82rem; color: var(--light); font-weight: 500; line-height: 1; }
+        .user-info span { font-size: .7rem; color: var(--slate); }
+        .logout-icon { margin-left: auto; color: var(--slate); font-size: .9rem; text-decoration: none; }
+
+        /* ── Main ── */
+        .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+        .topbar { height: var(--topbar-h); background: var(--deep); border-bottom: 1px solid rgba(201,168,76,.1); display: flex; align-items: center; padding: 0 1.8rem; gap: 1rem; flex-shrink: 0; }
+        .topbar__back { display: flex; align-items: center; gap: .5rem; color: var(--slate); text-decoration: none; font-size: .85rem; padding: .4rem .8rem; border: 1px solid rgba(201,168,76,.15); border-radius: 8px; transition: background .2s, color .2s; }
+        .topbar__back:hover { background: rgba(201,168,76,.08); color: var(--gold); }
+        .topbar__title { font-family: 'Playfair Display', serif; font-size: 1.25rem; color: var(--white); }
+        .topbar__sub { font-size: .78rem; color: var(--slate); margin-top: .1rem; }
+
+        /* ── Theme toggle ── */
+        .theme-toggle { width: 38px; height: 38px; border-radius: 9px; background: rgba(255,255,255,.05); border: 1px solid rgba(201,168,76,.15); display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 1.1rem; transition: background .2s; margin-left: auto; }
+        .theme-toggle:hover { background: rgba(201,168,76,.1); }
+
+        /* ── Content ── */
+        .content { flex: 1; overflow-y: auto; padding: 2rem; }
+
+        /* ── Progress stepper ── */
+        .stepper {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0;
+            margin-bottom: 2rem;
+            animation: fadeUp .4s ease both;
+        }
+        .step {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: .35rem;
+            position: relative;
+        }
+        .step-circle {
+            width: 36px; height: 36px;
+            border-radius: 50%;
+            border: 2px solid rgba(201,168,76,.3);
+            background: var(--panel);
+            display: flex; align-items: center; justify-content: center;
+            font-size: .82rem;
+            font-weight: 700;
+            color: var(--slate);
+            transition: all .3s;
+        }
+        .step.active .step-circle { border-color: var(--gold); background: rgba(201,168,76,.15); color: var(--gold); }
+        .step.done .step-circle { border-color: var(--green); background: rgba(45,212,191,.15); color: var(--green); }
+        .step-label { font-size: .68rem; color: var(--slate); text-transform: uppercase; letter-spacing: .05em; white-space: nowrap; }
+        .step.active .step-label { color: var(--gold); }
+        .step.done .step-label { color: var(--green); }
+        .step-line { width: 60px; height: 2px; background: rgba(201,168,76,.15); margin-bottom: 1.3rem; }
+        .step-line.done { background: var(--green); }
+
+        /* ── Form layout ── */
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            max-width: 860px;
+            margin: 0 auto;
+        }
+
+        .form-section {
+            background: var(--panel);
+            border: 1px solid rgba(201,168,76,.12);
+            border-radius: 16px;
+            overflow: hidden;
+            animation: fadeUp .4s ease both;
+        }
+        .form-section:nth-child(1) { animation-delay: .05s; }
+        .form-section:nth-child(2) { animation-delay: .1s; }
+        .form-section:nth-child(3) { animation-delay: .15s; grid-column: 1 / -1; }
+        .form-section:nth-child(4) { animation-delay: .2s; grid-column: 1 / -1; }
+
+        .section-head {
+            padding: 1rem 1.4rem;
+            border-bottom: 1px solid rgba(201,168,76,.1);
+            display: flex;
+            align-items: center;
+            gap: .7rem;
+            background: rgba(255,255,255,.02);
+        }
+        .section-head .s-icon { font-size: 1.1rem; }
+        .section-head h3 { font-family: 'Playfair Display', serif; font-size: .95rem; color: var(--white); }
+        .section-head p { font-size: .72rem; color: var(--slate); margin-top: .1rem; }
+
+        .section-body { padding: 1.3rem 1.4rem; display: flex; flex-direction: column; gap: 1rem; }
+
+        .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: .9rem; }
+        .field-row.triple { grid-template-columns: 1fr 1fr 1fr; }
+        .field-row.single { grid-template-columns: 1fr; }
+
+        .field { display: flex; flex-direction: column; gap: .4rem; }
+
+        label {
+            font-size: .72rem;
+            font-weight: 600;
+            color: var(--light);
+            text-transform: uppercase;
+            letter-spacing: .06em;
+        }
+        label .req { color: var(--red); margin-left: .2rem; }
+
+        input[type="text"],
+        input[type="email"],
+        input[type="date"],
+        input[type="number"],
+        input[type="tel"],
+        select,
+        textarea {
+            background: rgba(255,255,255,.05);
+            border: 1px solid rgba(201,168,76,.18);
+            border-radius: 9px;
+            padding: .7rem .9rem;
+            color: var(--white);
+            font-family: 'DM Sans', sans-serif;
+            font-size: .88rem;
+            outline: none;
+            width: 100%;
+            transition: border-color .25s, background .25s, box-shadow .25s;
+        }
+        input:focus, select:focus, textarea:focus {
+            border-color: var(--gold);
+            background: rgba(201,168,76,.07);
+            box-shadow: 0 0 0 3px rgba(201,168,76,.1);
+        }
+        input::placeholder, textarea::placeholder { color: rgba(136,146,176,.45); }
+        select option { background: var(--deep); color: var(--white); }
+        textarea { resize: vertical; min-height: 80px; }
+
+        /* File upload */
+        .file-upload-area {
+            border: 2px dashed rgba(201,168,76,.25);
+            border-radius: 10px;
+            padding: 1.4rem;
+            text-align: center;
+            cursor: pointer;
+            transition: border-color .25s, background .25s;
+            position: relative;
+        }
+        .file-upload-area:hover { border-color: var(--gold); background: rgba(201,168,76,.04); }
+        .file-upload-area input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+        .file-upload-area .upload-icon { font-size: 1.8rem; margin-bottom: .5rem; }
+        .file-upload-area p { font-size: .82rem; color: var(--slate); }
+        .file-upload-area span { font-size: .72rem; color: rgba(136,146,176,.6); display: block; margin-top: .25rem; }
+
+        /* Documents checklist */
+        .doc-checklist { display: grid; grid-template-columns: 1fr 1fr; gap: .6rem; }
+        .doc-item {
+            display: flex;
+            align-items: center;
+            gap: .6rem;
+            padding: .65rem .9rem;
+            background: rgba(255,255,255,.03);
+            border: 1px solid rgba(201,168,76,.1);
+            border-radius: 9px;
+            cursor: pointer;
+            transition: background .2s, border-color .2s;
+        }
+        .doc-item:hover { background: rgba(201,168,76,.07); border-color: rgba(201,168,76,.25); }
+        .doc-item input[type="checkbox"] { accent-color: var(--gold); width: 15px; height: 15px; flex-shrink: 0; }
+        .doc-item label { font-size: .8rem; color: var(--light); text-transform: none; letter-spacing: 0; font-weight: 400; cursor: pointer; margin: 0; }
+        .doc-item .doc-icon { font-size: .9rem; }
+
+        /* Submit row */
+        .submit-row {
+            grid-column: 1 / -1;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 1rem;
+            padding: 1.2rem 1.4rem;
+            background: var(--panel);
+            border: 1px solid rgba(201,168,76,.12);
+            border-radius: 16px;
+            animation: fadeUp .4s .25s ease both;
+        }
+
+        .btn-cancel { background: transparent; border: 1px solid rgba(201,168,76,.2); color: var(--slate); font-family: 'DM Sans', sans-serif; font-size: .88rem; padding: .65rem 1.2rem; border-radius: 9px; cursor: pointer; transition: background .2s, color .2s; text-decoration: none; }
+        .btn-cancel:hover { background: rgba(255,255,255,.05); color: var(--light); }
+
+        .btn-submit { background: linear-gradient(135deg, var(--gold), #a87c2a); color: var(--navy); font-family: 'DM Sans', sans-serif; font-size: .92rem; font-weight: 700; padding: .72rem 1.8rem; border: none; border-radius: 9px; cursor: pointer; box-shadow: 0 4px 18px rgba(201,168,76,.35); transition: transform .2s, box-shadow .2s; }
+        .btn-submit:hover { transform: translateY(-2px); box-shadow: 0 8px 26px rgba(201,168,76,.5); }
+
+        /* Flash */
+        .flash { padding: .75rem 1rem; border-radius: 10px; font-size: .84rem; margin-bottom: 1rem; max-width: 860px; margin-left: auto; margin-right: auto; }
+        .flash-success { background: rgba(45,212,191,.1); border: 1px solid rgba(45,212,191,.3); color: var(--green); }
+        .flash-error   { background: rgba(248,113,113,.1); border: 1px solid rgba(248,113,113,.3); color: var(--red); }
+
+        @keyframes fadeUp { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
+        ::-webkit-scrollbar { width: 5px; } ::-webkit-scrollbar-track { background: transparent; } ::-webkit-scrollbar-thumb { background: rgba(201,168,76,.2); border-radius: 10px; }
+        @media (max-width: 900px) { .form-grid { grid-template-columns: 1fr; } .form-section:nth-child(3), .form-section:nth-child(4) { grid-column: 1; } }
+        @media (max-width: 700px) { .sidebar { display: none; } .field-row, .field-row.triple { grid-template-columns: 1fr; } .doc-checklist { grid-template-columns: 1fr; } }
+
+        /* Light mode */
+        body.light-mode { --navy:#f0f4ff; --deep:#e2e8f4; --panel:#ffffff; --slate:#4a5568; --light:#2d3748; --white:#1a202c; background:var(--navy); color:var(--light); }
+        body.light-mode .sidebar, body.light-mode .topbar { background: var(--deep); }
+        body.light-mode .form-section, body.light-mode .submit-row { background: var(--panel); box-shadow: 0 2px 12px rgba(0,0,0,.08); }
+        body.light-mode input, body.light-mode select, body.light-mode textarea { background: #f7fafc; color: var(--white); border-color: #cbd5e0; }
+        body.light-mode .nav-item { color: var(--slate); }
+    </style>
+</head>
+<body>
+
+<!-- ── Sidebar ── -->
+<aside class="sidebar">
+    <div class="sidebar__brand">
+        <div class="brand-icon">🛡️</div>
+        <div class="brand-text"><h1>Assure<span>X</span></h1><p>Assurance Platform</p></div>
+    </div>
+    <nav class="sidebar__nav">
+        <div class="nav-section-label">Overview</div>
+        <a href="{{ path('app_dashboard') }}" class="nav-item"><span class="icon">📊</span> Dashboard</a>
+        <div class="nav-section-label">Clients</div>
+        <a href="#" class="nav-item"><span class="icon">👥</span> Clients <span class="badge">142</span></a>
+        <a href="{{ path('app_pros') }}" class="nav-item"><span class="icon">📋</span> Prospects <span class="badge red">7</span></a>
+        <a href="#" class="nav-item"><span class="icon">➕</span> New Registration</a>
+        <div class="nav-section-label">Policies</div>
+        <a href="{{ path('app_health') }}" class="nav-item active"><span class="icon">❤️</span> Health Assurance</a>
+        <a href="#" class="nav-item"><span class="icon">🚖</span> Taxi Assurance</a>
+        <a href="#" class="nav-item"><span class="icon">🏠</span> Home Assurance</a>
+        <a href="#" class="nav-item"><span class="icon">🚗</span> Auto Assurance</a>
+        <div class="nav-section-label">Management</div>
+        <a href="{{ path('app_users') }}" class="nav-item"><span class="icon">👤</span> Users</a>
+        <a href="#" class="nav-item"><span class="icon">📁</span> Claims <span class="badge red">3</span></a>
+        <a href="#" class="nav-item"><span class="icon">📈</span> Reports</a>
+    </nav>
+    <div class="sidebar__footer">
+        <div class="user-chip">
+            <div class="avatar">{% if app.user %}{{ (app.user.userIdentifier ?? 'A')|first|upper }}{% else %}A{% endif %}</div>
+            <div class="user-info"><p>{{ app.user ? app.user.userIdentifier : 'Agent' }}</p><span>Agent</span></div>
+            <a href="{{ logout_path() }}" class="logout-icon" title="Logout">↩</a>
+        </div>
+    </div>
+</aside>
+
+<!-- ── Main ── -->
+<div class="main">
+    <header class="topbar">
+        <a href="{{ path('app_dashboard') }}" class="topbar__back">← Back</a>
+        <div style="margin-left:.5rem;">
+            <div class="topbar__title">Health Insurance Registration</div>
+            <div class="topbar__sub">Fill in client details — dossier will appear in Prospects for review</div>
+        </div>
+        <button class="theme-toggle" id="themeToggle" title="Toggle theme">🌙</button>
+    </header>
+
+    <div class="content">
+
+        {% for message in app.flashes('success') %}
+            <div class="flash flash-success">✅ {{ message }}</div>
+        {% endfor %}
+        {% for message in app.flashes('error') %}
+            <div class="flash flash-error">⚠️ {{ message }}</div>
+        {% endfor %}
+
+        <!-- Stepper -->
+        <div class="stepper">
+            <div class="step active">
+                <div class="step-circle">1</div>
+                <div class="step-label">Client Info</div>
+            </div>
+            <div class="step-line"></div>
+            <div class="step">
+                <div class="step-circle">2</div>
+                <div class="step-label">Commercial Review</div>
+            </div>
+            <div class="step-line"></div>
+            <div class="step">
+                <div class="step-circle">3</div>
+                <div class="step-label">Admin Validation</div>
+            </div>
+            <div class="step-line"></div>
+            <div class="step">
+                <div class="step-circle">✓</div>
+                <div class="step-label">Approved</div>
+            </div>
+        </div>
+
+        <form method="post" action="{{ path('app_health') }}" enctype="multipart/form-data">
+            <input type="hidden" name="_token" value="{{ csrf_token('health_registration') }}">
+
+            <div class="form-grid">
+
+                <!-- Section 1: Personal Info -->
+                <div class="form-section">
+                    <div class="section-head">
+                        <span class="s-icon">👤</span>
+                        <div><h3>Personal Information</h3><p>Client identity details</p></div>
+                    </div>
+                    <div class="section-body">
+                        <div class="field-row">
+                            <div class="field">
+                                <label>First Name <span class="req">*</span></label>
+                                <input type="text" name="first_name" placeholder="Karim" required>
+                            </div>
+                            <div class="field">
+                                <label>Last Name <span class="req">*</span></label>
+                                <input type="text" name="last_name" placeholder="Benali" required>
+                            </div>
+                        </div>
+                        <div class="field">
+                            <label>Date of Birth <span class="req">*</span></label>
+                            <input type="date" name="dob" required>
+                        </div>
+                        <div class="field">
+                            <label>National ID / CIN <span class="req">*</span></label>
+                            <input type="text" name="cin" placeholder="AB123456" required>
+                        </div>
+                        <div class="field">
+                            <label>Gender</label>
+                            <select name="gender">
+                                <option value="">Select…</option>
+                                <option value="male">Male</option>
+                                <option value="female">Female</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section 2: Contact -->
+                <div class="form-section">
+                    <div class="section-head">
+                        <span class="s-icon">📞</span>
+                        <div><h3>Contact Details</h3><p>How to reach the client</p></div>
+                    </div>
+                    <div class="section-body">
+                        <div class="field">
+                            <label>Email Address <span class="req">*</span></label>
+                            <input type="email" name="email" placeholder="client@example.com" required>
+                        </div>
+                        <div class="field">
+                            <label>Phone Number <span class="req">*</span></label>
+                            <input type="tel" name="phone" placeholder="+212 6XX XXX XXX" required>
+                        </div>
+                        <div class="field">
+                            <label>City</label>
+                            <input type="text" name="city" placeholder="Casablanca">
+                        </div>
+                        <div class="field">
+                            <label>Full Address</label>
+                            <textarea name="address" placeholder="Street, district…"></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section 3: Health Coverage -->
+                <div class="form-section">
+                    <div class="section-head">
+                        <span class="s-icon">❤️</span>
+                        <div><h3>Health Coverage Details</h3><p>Plan and medical information</p></div>
+                    </div>
+                    <div class="section-body">
+                        <div class="field-row triple">
+                            <div class="field">
+                                <label>Coverage Plan <span class="req">*</span></label>
+                                <select name="plan" required>
+                                    <option value="">Select plan…</option>
+                                    <option value="basic">Basic</option>
+                                    <option value="standard">Standard</option>
+                                    <option value="premium">Premium</option>
+                                    <option value="family">Family</option>
+                                </select>
+                            </div>
+                            <div class="field">
+                                <label>Start Date <span class="req">*</span></label>
+                                <input type="date" name="start_date" required>
+                            </div>
+                            <div class="field">
+                                <label>Number of Beneficiaries</label>
+                                <input type="number" name="beneficiaries" min="1" max="20" placeholder="1">
+                            </div>
+                        </div>
+                        <div class="field-row">
+                            <div class="field">
+                                <label>Pre-existing Conditions</label>
+                                <select name="conditions">
+                                    <option value="none">None</option>
+                                    <option value="diabetes">Diabetes</option>
+                                    <option value="hypertension">Hypertension</option>
+                                    <option value="cardiac">Cardiac</option>
+                                    <option value="other">Other</option>
+                                </select>
+                            </div>
+                            <div class="field">
+                                <label>Monthly Premium (MAD)</label>
+                                <input type="number" name="premium" placeholder="350" min="0">
+                            </div>
+                        </div>
+                        <div class="field">
+                            <label>Medical Notes</label>
+                            <textarea name="medical_notes" placeholder="Any relevant medical history or notes…"></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section 4: Documents -->
+                <div class="form-section">
+                    <div class="section-head">
+                        <span class="s-icon">📎</span>
+                        <div><h3>Required Documents</h3><p>Check what has been provided — upload scans</p></div>
+                    </div>
+                    <div class="section-body">
+                        <div class="doc-checklist">
+                            <label class="doc-item">
+                                <input type="checkbox" name="docs[]" value="cin"><span class="doc-icon">🪪</span>
+                                <label>National ID (CIN)</label>
+                            </label>
+                            <label class="doc-item">
+                                <input type="checkbox" name="docs[]" value="photo"><span class="doc-icon">📸</span>
+                                <label>Recent Photo</label>
+                            </label>
+                            <label class="doc-item">
+                                <input type="checkbox" name="docs[]" value="medical"><span class="doc-icon">🏥</span>
+                                <label>Medical Certificate</label>
+                            </label>
+                            <label class="doc-item">
+                                <input type="checkbox" name="docs[]" value="salary"><span class="doc-icon">💰</span>
+                                <label>Proof of Income</label>
+                            </label>
+                            <label class="doc-item">
+                                <input type="checkbox" name="docs[]" value="family"><span class="doc-icon">👨‍👩‍👧</span>
+                                <label>Family Book (if family plan)</label>
+                            </label>
+                            <label class="doc-item">
+                                <input type="checkbox" name="docs[]" value="contract"><span class="doc-icon">📄</span>
+                                <label>Signed Contract</label>
+                            </label>
+                        </div>
+
+                        <div class="field" style="margin-top:.5rem;">
+                            <label>Upload Document Scans (PDF / Images)</label>
+                            <div class="file-upload-area">
+                                <input type="file" name="files[]" multiple accept=".pdf,.jpg,.jpeg,.png">
+                                <div class="upload-icon">📁</div>
+                                <p>Drag & drop files or <strong style="color:var(--gold)">click to browse</strong></p>
+                                <span>PDF, JPG, PNG — max 10MB each</span>
+                            </div>
+                        </div>
+
+                        <div class="field">
+                            <label>Commercial Notes</label>
+                            <textarea name="commercial_notes" placeholder="Internal notes visible only to commercial team and admin…"></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Submit row -->
+                <div class="submit-row">
+                    <a href="{{ path('app_dashboard') }}" class="btn-cancel">Cancel</a>
+                    <button type="submit" class="btn-submit">📋 Submit Dossier to Prospects →</button>
+                </div>
+
+            </div>{# /form-grid #}
+        </form>
+
+    </div>{# /content #}
+</div>{# /main #}
+
+<script>
+    // Theme toggle
+    const toggle = document.getElementById('themeToggle');
+    if (localStorage.getItem('theme') === 'light') { document.body.classList.add('light-mode'); toggle.textContent = '☀️'; }
+    toggle.addEventListener('click', () => {
+        document.body.classList.toggle('light-mode');
+        const isLight = document.body.classList.contains('light-mode');
+        toggle.textContent = isLight ? '☀️' : '🌙';
+        localStorage.setItem('theme', isLight ? 'light' : 'dark');
+    });
+
+    // File upload label update
+    document.querySelector('input[type="file"]').addEventListener('change', function() {
+        const p = this.closest('.file-upload-area').querySelector('p');
+        p.innerHTML = `<strong style="color:var(--green)">${this.files.length} file(s) selected</strong>`;
+    });
+</script>
+</body>
+</html>
