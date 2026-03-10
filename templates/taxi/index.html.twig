@@ -8,24 +8,20 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="icon" type="image/png" href="{{ asset('images/logo.png') }}">
-
 </head>
 <body>
 
-<!-- ── Sidebar ── -->
 <aside class="sidebar">
     <div class="sidebar__brand">
         <div class="brand-icon">🛡️</div>
         <div class="brand-text"><h1>Assure<span>X</span></h1><p>Assurance Platform</p></div>
     </div>
     <nav class="sidebar__nav">
-
         <div class="nav-section-label">Anssurances</div>
         <a href="{{ path('app_health') }}" class="nav-item"><span class="icon">❤️</span> Health Assurance</a>
         <a href="{{ path('app_taxi') }}" class="nav-item active"><span class="icon">🚖</span> Taxi Assurance</a>
         <a href="#" class="nav-item"><span class="icon">🏠</span> Home Assurance</a>
         <a href="#" class="nav-item"><span class="icon">🚗</span> Auto Assurance</a>
-
     </nav>
     <div class="sidebar__footer">
         <div class="user-chip">
@@ -35,7 +31,6 @@
     </div>
 </aside>
 
-<!-- ── Main ── -->
 <div class="main">
     <header class="topbar">
         <div style="margin-left:.5rem;">
@@ -46,46 +41,10 @@
 
     <div class="content">
 
-        {% if submitted is defined and submitted %}
-        <!-- ── Success screen ── -->
-        <div class="success-screen">
-            <div class="success-icon">✅</div>
-            <h2>Dossier Submitted Successfully!</h2>
-            <p>The client's taxi insurance dossier has been recorded and is now <strong>pending review</strong> by the commercial team.</p>
-            <div class="success-steps">
-                <div class="ss-step done">
-                    <span class="ss-circle">✓</span>
-                    <span>Client Info Saved</span>
-                </div>
-                <div class="ss-line done"></div>
-                <div class="ss-step active">
-                    <span class="ss-circle">2</span>
-                    <span>Commercial Review</span>
-                </div>
-                <div class="ss-line"></div>
-                <div class="ss-step">
-                    <span class="ss-circle">3</span>
-                    <span>Admin Validation</span>
-                </div>
-                <div class="ss-line"></div>
-                <div class="ss-step">
-                    <span class="ss-circle">✓</span>
-                    <span>Approved</span>
-                </div>
-            </div>
-            <div class="success-actions">
-                <a href="{{ path('app_taxi') }}" class="btn-new">➕ Submit Another Dossier</a>
-                
-            </div>
-        </div>
-
-        {% else %}
-
         {% for message in app.flashes('error') %}
             <div class="flash flash-error">⚠️ {{ message }}</div>
         {% endfor %}
 
-        <!-- Stepper -->
         <div class="stepper">
             <div class="step active">
                 <div class="step-circle">1</div>
@@ -94,11 +53,16 @@
             <div class="step-line"></div>
             <div class="step">
                 <div class="step-circle">2</div>
-                <div class="step-label">Commercial Review</div>
+                <div class="step-label">Payment</div>
             </div>
             <div class="step-line"></div>
             <div class="step">
                 <div class="step-circle">3</div>
+                <div class="step-label">Commercial Review</div>
+            </div>
+            <div class="step-line"></div>
+            <div class="step">
+                <div class="step-circle">4</div>
                 <div class="step-label">Admin Validation</div>
             </div>
             <div class="step-line"></div>
@@ -110,6 +74,8 @@
 
         <form method="post" action="{{ path('app_taxi') }}" enctype="multipart/form-data">
             <input type="hidden" name="_token" value="{{ csrf_token('taxi_registration') }}">
+            {# Hidden field — price is set automatically by JS, not editable #}
+            <input type="hidden" name="premium" id="premium_hidden" value="0">
 
             <div class="form-grid">
 
@@ -175,14 +141,15 @@
                     </div>
                 </div>
 
-                <!-- Section 3: Taxi Coverage -->
+                <!-- Section 3: Coverage + Duration -->
                 <div class="form-section">
                     <div class="section-head">
                         <span class="s-icon">🚖</span>
-                        <div><h3>Taxi Coverage Details</h3><p>Plan and taxi  information</p></div>
+                        <div><h3>Taxi Coverage Details</h3><p>Plan and coverage period</p></div>
                     </div>
                     <div class="section-body">
-                        <div class="field-row triple">
+
+                        <div class="field-row">
                             <div class="field">
                                 <label>Coverage Plan <span class="req">*</span></label>
                                 <select name="plan" required>
@@ -195,27 +162,74 @@
                             </div>
                             <div class="field">
                                 <label>Start Date <span class="req">*</span></label>
-                                <input type="date" name="start_date" required>
-                            </div>
-                            <div class="field">
-                                <label>Number of Beneficiaries</label>
-                                <input type="number" name="beneficiaries" min="1" max="20" placeholder="1">
+                                <input type="date" name="start_date" id="start_date" required
+                                    onchange="recalculate()">
                             </div>
                         </div>
-                        <div class="field-row">
-                            <div class="field">
-                                <label>Pre-existing Conditions</label>
-                                <select name="conditions">
-                                    <option value="none">None</option>
 
-                                    <option value="other">Other</option>
-                                </select>
-                            </div>
-                            <div class="field">
-                                <label>Monthly Premium (MAD)</label>
-                                <input type="number" name="premium" placeholder="350" min="0">
+                        <!-- Duration cards with fixed prices -->
+                        <div class="field">
+                            <label>Coverage Duration <span class="req">*</span></label>
+                            <div class="duration-cards">
+
+                                <label class="dur-card" for="dur3">
+                                    <input type="radio" name="duration_months" id="dur3" value="3" required onchange="recalculate()">
+                                    <span class="dur-box">
+                                        <span class="dur-num">3</span>
+                                        <span class="dur-label">months</span>
+                                        <span class="dur-price">300 MAD</span>
+                                    </span>
+                                </label>
+
+                                <label class="dur-card" for="dur6">
+                                    <input type="radio" name="duration_months" id="dur6" value="6" onchange="recalculate()">
+                                    <span class="dur-box">
+                                        <span class="dur-badge">Popular</span>
+                                        <span class="dur-num">6</span>
+                                        <span class="dur-label">months</span>
+                                        <span class="dur-price">600 MAD</span>
+                                    </span>
+                                </label>
+
+                                <label class="dur-card" for="dur12">
+                                    <input type="radio" name="duration_months" id="dur12" value="12" onchange="recalculate()">
+                                    <span class="dur-box">
+                                        <span class="dur-badge best">Best value</span>
+                                        <span class="dur-num">12</span>
+                                        <span class="dur-label">months</span>
+                                        <span class="dur-price">1200 MAD</span>
+                                    </span>
+                                </label>
+
                             </div>
                         </div>
+
+                        <!-- Live summary — appears once start date + duration are selected -->
+                        <div id="coverage-summary" style="display:none;" class="coverage-summary-box">
+                            <div class="cs-row">
+                                <span>📅 Start</span>
+                                <strong id="cs-start">—</strong>
+                            </div>
+                            <div class="cs-divider"></div>
+                            <div class="cs-row">
+                                <span>🏁 Expires</span>
+                                <strong id="cs-end" style="color:#dc2626;">—</strong>
+                            </div>
+                            <div class="cs-divider"></div>
+                            <div class="cs-row">
+                                <span>💰 Total</span>
+                                <strong id="cs-total" style="color:#2563eb;">— MAD</strong>
+                            </div>
+                        </div>
+
+                        <div class="field">
+                            <label>Pre-existing Conditions</label>
+                            <select name="conditions">
+                                <option value="none">None</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+
                         <div class="field">
                             <label>Medical Notes</label>
                             <textarea name="medical_notes" placeholder="Any relevant medical history or notes…"></textarea>
@@ -223,49 +237,139 @@
                     </div>
                 </div>
 
-                <!-- Section 4: Documents -->
+                <!-- Section 4: Payment Method -->
                 <div class="form-section">
-
-                <!-- Section 5: Commercial Assignment -->
-                        <div class="form-section">
-                            <div class="section-head">
-                                <span class="s-icon">👔</span>
-                                <div><h3>Assign to Commercial</h3><p>The commercial who will handle this dossier</p></div>
-                            </div>
-                            <div class="section-body">
-                                <div class="field">
-                                    <label>Commercial Email <span class="req">*</span></label>
-                                    <input 
-                                        type="email" 
-                                        name="commercial_email" 
-                                        placeholder="Hana@gmail.ma" 
-                                        required
-                                    >   
-                                    <small style="color:var(--text-muted, #888); margin-top:.3rem; display:block;">
-                                        Enter the email of the commercial this client spoke with.
-                                    </small>
-                                </div>
+                    <div class="section-head">
+                        <span class="s-icon">💳</span>
+                        <div><h3>Payment Method</h3><p>How the client will pay</p></div>
+                    </div>
+                    <div class="section-body">
+                        <div class="field">
+                            <label>Select Payment Method <span class="req">*</span></label>
+                            <div style="display:flex;gap:.75rem;margin-top:.5rem;flex-wrap:wrap;">
+                                <label class="pay-option" for="pay-card">
+                                    <input type="radio" name="payment_method" id="pay-card" value="card" required>
+                                    <span class="pay-option-box">
+                                        <span class="pay-icon">💳</span>
+                                        <span class="pay-label">Credit Card</span>
+                                    </span>
+                                </label>
+                                <label class="pay-option" for="pay-paypal">
+                                    <input type="radio" name="payment_method" id="pay-paypal" value="paypal">
+                                    <span class="pay-option-box">
+                                        <span class="pay-icon">🅿</span>
+                                        <span class="pay-label">PayPal</span>
+                                    </span>
+                                </label>
+                                <label class="pay-option" for="pay-cash">
+                                    <input type="radio" name="payment_method" id="pay-cash" value="cash">
+                                    <span class="pay-option-box">
+                                        <span class="pay-icon">💵</span>
+                                        <span class="pay-label">Cash</span>
+                                    </span>
+                                </label>
                             </div>
                         </div>
-
                     </div>
                 </div>
 
-                <!-- Submit row -->
-                <div class="submit-row">
-                    <a href="{{ path('app_dashboard') }}" class="btn-cancel">Cancel</a>
-                    <button type="submit" class="btn-submit">📋 Submit Dossier to Prospects →</button>
+                <!-- Section 5: Commercial Assignment -->
+                <div class="form-section">
+                    <div class="section-head">
+                        <span class="s-icon">👔</span>
+                        <div><h3>Assign to Commercial</h3><p>The commercial who handled this call</p></div>
+                    </div>
+                    <div class="section-body">
+                        <div class="field">
+                            <label>Commercial Email <span class="req">*</span></label>
+                            <input type="email" name="commercial_email" placeholder="commercial@assurex.ma" required>
+                            <small style="color:var(--text-muted,#888);margin-top:.3rem;display:block;">
+                                Enter the email of the commercial this client spoke with.
+                            </small>
+                        </div>
+                    </div>
                 </div>
+
+            </div>
+
+            <div class="submit-row">
+                <a href="{{ path('app_dashboard') }}" class="btn-cancel">Cancel</a>
+                <button type="submit" class="btn-submit">💳 Continue to Payment →</button>
+            </div>
 
         </form>
 
-        {% endif %}{# end submitted check #}
+    </div>
+</div>
 
-    </div>{# /content #}
-</div>{# /main #}
+<style>
+/* Duration cards */
+.duration-cards { display:flex; gap:.75rem; margin-top:.5rem; flex-wrap:wrap; }
+.dur-card input[type="radio"] { display:none; }
+.dur-box {
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:.2rem;
+    padding:1rem 1.5rem; border:2px solid var(--border,#e2e8f0); border-radius:12px;
+    cursor:pointer; transition:all .2s; background:var(--card,white);
+    min-width:110px; position:relative;
+}
+.dur-card input[type="radio"]:checked + .dur-box {
+    border-color:#2563eb; background:#eff6ff;
+    box-shadow:0 0 0 3px rgba(37,99,235,.12);
+}
+.dur-box:hover { border-color:#93c5fd; }
+.dur-num {
+    font-size:2rem; font-weight:800; color:#1e293b; line-height:1;
+}
+.dur-card input[type="radio"]:checked + .dur-box .dur-num { color:#2563eb; }
+.dur-label { font-size:.75rem; color:#64748b; font-weight:500; text-transform:uppercase; letter-spacing:.05em; }
+.dur-price {
+    font-size:.85rem; font-weight:700; color:#16a34a;
+    background:#f0fdf4; padding:2px 10px; border-radius:20px; margin-top:4px;
+}
+.dur-card input[type="radio"]:checked + .dur-box .dur-price {
+    background:#dbeafe; color:#2563eb;
+}
+.dur-badge {
+    position:absolute; top:-10px;
+    background:#f59e0b; color:white;
+    font-size:.62rem; font-weight:700;
+    padding:2px 8px; border-radius:20px;
+    text-transform:uppercase; letter-spacing:.04em;
+}
+.dur-badge.best { background:#16a34a; }
+
+/* Coverage summary */
+.coverage-summary-box {
+    display:flex; align-items:center; gap:.75rem;
+    padding:.9rem 1.25rem; background:#f8fafc;
+    border:1.5px solid #e2e8f0; border-radius:10px;
+    margin:.75rem 0; flex-wrap:wrap;
+}
+.cs-row { display:flex; flex-direction:column; gap:.2rem; font-size:.82rem; color:#64748b; }
+.cs-row strong { font-size:1rem; color:#1e293b; }
+.cs-divider { width:1px; height:36px; background:#e2e8f0; }
+
+/* Payment method */
+.pay-option input[type="radio"] { display:none; }
+.pay-option-box {
+    display:flex; flex-direction:column; align-items:center; gap:.35rem;
+    padding:.85rem 1.75rem; border:2px solid var(--border,#e2e8f0);
+    border-radius:10px; cursor:pointer; transition:all .2s;
+    background:var(--card,white); min-width:110px;
+}
+.pay-option input[type="radio"]:checked + .pay-option-box {
+    border-color:#2563eb; background:#eff6ff; color:#1d4ed8;
+    box-shadow:0 0 0 3px rgba(37,99,235,.12);
+}
+.pay-option-box:hover { border-color:#93c5fd; }
+.pay-icon { font-size:1.5rem; }
+.pay-label { font-size:.82rem; font-weight:600; }
+</style>
 
 <script>
-    // Theme toggle
+    // Fixed prices per duration
+    const PRICES = { '3': 300, '6': 600, '12': 1200 };
+
     const toggle = document.getElementById('themeToggle');
     if (localStorage.getItem('theme') === 'light') { document.body.classList.add('light-mode'); toggle.textContent = '☀️'; }
     toggle.addEventListener('click', () => {
@@ -275,11 +379,29 @@
         localStorage.setItem('theme', isLight ? 'light' : 'dark');
     });
 
-    // File upload label update
-    document.querySelector('input[type="file"]').addEventListener('change', function() {
-        const p = this.closest('.file-upload-area').querySelector('p');
-        p.innerHTML = `<strong style="color:var(--green)">${this.files.length} file(s) selected</strong>`;
-    });
+    function recalculate() {
+        const startVal = document.getElementById('start_date').value;
+        const durInput = document.querySelector('input[name="duration_months"]:checked');
+        if (!startVal || !durInput) return;
+
+        const months = parseInt(durInput.value);
+        const price  = PRICES[durInput.value] || 0;
+
+        const end = new Date(startVal);
+        end.setMonth(end.getMonth() + months);
+        end.setDate(end.getDate() - 1);
+
+        const fmt = d => d.toLocaleDateString('fr-MA', { day:'2-digit', month:'2-digit', year:'numeric' });
+        const start = new Date(startVal);
+
+        document.getElementById('cs-start').textContent = fmt(start);
+        document.getElementById('cs-end').textContent   = fmt(end);
+        document.getElementById('cs-total').textContent = price.toLocaleString('fr-MA') + ' MAD';
+        document.getElementById('coverage-summary').style.display = 'flex';
+
+        // Set hidden premium = total price / months (so controller stores monthly rate)
+        document.getElementById('premium_hidden').value = price / months;
+    }
 </script>
 </body>
 </html>
