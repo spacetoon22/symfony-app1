@@ -48,14 +48,18 @@ final class TaxiController extends AbstractController
             $dossier->setClaimedBy($commercial);
             $dossier->setStatus('claimed');
 
-            // Duration months (3, 6, or 12)
-            $durationMonths = (int) $request->request->get('duration_months', 12);
-            $dossier->setDurationMonths($durationMonths);
+            // Plan determines duration AND price — hardcoded, cannot be tampered
+            $planConfig = [
+                'basic'    => ['months' => 3,  'total' => 300],
+                'standard' => ['months' => 6,  'total' => 546],
+                'premium'  => ['months' => 12, 'total' => 1020],
+            ];
+            $plan   = $request->request->get('plan', 'basic');
+            $cfg    = $planConfig[$plan] ?? $planConfig['basic'];
+            $durationMonths = $cfg['months'];
+            $totalPrice     = $cfg['total'];
 
-            // Fixed prices: 3→300, 6→600, 12→1200 MAD total
-            // Store monthly rate = total / months
-            $fixedPrices = [3 => 300, 6 => 600, 12 => 1200];
-            $totalPrice  = $fixedPrices[$durationMonths] ?? ($durationMonths * 100);
+            $dossier->setDurationMonths($durationMonths);
             $dossier->setPremium($totalPrice / $durationMonths); // monthly rate
 
             // Date of birth

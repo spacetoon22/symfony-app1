@@ -93,9 +93,7 @@
     .pp-logo span { color: #009cde; }
     .pp-sub { font-size: .85rem; color: #64748b; margin-bottom: 1.25rem; }
 
-    .cash-panel-inner { text-align: center; padding: 1.25rem 0 1.5rem; }
-    .cash-icon { font-size: 2.5rem; margin-bottom: .75rem; }
-    .cash-sub { font-size: .9rem; color: #64748b; line-height: 1.5; }
+
 
     .btn-pay {
         width: 100%; padding: .85rem;
@@ -220,7 +218,6 @@
         <div class="method-tabs">
             <button type="button" class="tab-btn {% if dossier.paymentMethod == 'card' or not dossier.paymentMethod %}active{% endif %}" onclick="switchTab('card',this)">💳 Card</button>
             <button type="button" class="tab-btn {% if dossier.paymentMethod == 'paypal' %}active{% endif %}" onclick="switchTab('paypal',this)">🅿 PayPal</button>
-            <button type="button" class="tab-btn {% if dossier.paymentMethod == 'cash' %}active{% endif %}" onclick="switchTab('cash',this)">💵 Cash</button>
         </div>
 
         {# Each panel has its OWN real form pointing directly to confirm route #}
@@ -269,14 +266,6 @@
             <button type="button" class="btn-pay" style="background:#009cde;" onclick="pay('paypal')">🅿 Pay with PayPal — {{ totalAmount }} MAD</button>
         </div>
 
-        {# Cash panel #}
-        <div class="pay-panel {% if dossier.paymentMethod == 'cash' %}active{% endif %}" id="panel-cash">
-            <div class="cash-panel-inner">
-                <div class="cash-icon">💵</div>
-                <div class="cash-sub">Client will pay <strong>{{ totalAmount }} MAD</strong> in cash at the agency.<br>Click confirm to record and generate the contract.</div>
-            </div>
-            <button type="button" class="btn-pay green" onclick="pay('cash')">✅ Confirm Cash — {{ totalAmount }} MAD</button>
-        </div>
 
         <div class="secure-note">🔒 Simulated payment — no real charges</div>
     </div>

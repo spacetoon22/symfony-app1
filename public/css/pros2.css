@@ -202,3 +202,67 @@ body.light-mode { --navy:#f0f4ff; --deep:#e2e8f4; --panel:#ffffff; --slate:#4a55
 body.light-mode .sidebar, body.light-mode .topbar { background: var(--deep); }
 body.light-mode .panel, body.light-mode .stat-card, body.light-mode .dossier-card { background: var(--panel); }
 body.light-mode .nav-item { color: var(--slate); }
+
+/* ── Delete button ── */
+.btn-delete {
+    background: transparent;
+    border: 1.5px solid rgba(239,68,68,.4);
+    color: #ef4444;
+    padding: .4rem .9rem;
+    border-radius: 8px;
+    font-size: .78rem;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all .2s;
+    display: flex;
+    align-items: center;
+    gap: .3rem;
+}
+.btn-delete:hover {
+    background: #ef4444;
+    color: white;
+    border-color: #ef4444;
+}
+/* ── Confirm delete modal ── */
+.delete-modal-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,.55);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+}
+.delete-modal-overlay.open { display: flex; }
+.delete-modal {
+    background: var(--panel, #1a1f2e);
+    border: 1px solid rgba(239,68,68,.25);
+    border-radius: 14px;
+    padding: 2rem;
+    max-width: 420px;
+    width: 90%;
+    text-align: center;
+    box-shadow: 0 20px 60px rgba(0,0,0,.4);
+}
+.delete-modal .dm-icon { font-size: 2.5rem; margin-bottom: .75rem; }
+.delete-modal h3 { font-size: 1.1rem; font-weight: 700; margin-bottom: .5rem; }
+.delete-modal p { font-size: .88rem; color: var(--slate, #8892a4); margin-bottom: 1.5rem; line-height: 1.5; }
+.dm-actions { display: flex; gap: .75rem; justify-content: center; }
+.btn-dm-cancel {
+    padding: .6rem 1.4rem; border-radius: 8px;
+    border: 1.5px solid rgba(255,255,255,.12);
+    background: transparent; color: var(--white, #fff);
+    font-weight: 600; cursor: pointer; font-family: inherit; font-size: .88rem;
+    transition: background .2s;
+}
+.btn-dm-cancel:hover { background: rgba(255,255,255,.06); }
+.btn-dm-confirm {
+    padding: .6rem 1.4rem; border-radius: 8px;
+    border: none; background: #ef4444; color: white;
+    font-weight: 700; cursor: pointer; font-family: inherit; font-size: .88rem;
+    transition: background .2s;
+}
+.btn-dm-confirm:hover { background: #dc2626; }
+body.light-mode .delete-modal { background: #ffffff; border-color: rgba(239,68,68,.2); }
+body.light-mode .btn-dm-cancel { color: #1e293b; border-color: #e2e8f0; }
+body.light-mode .btn-dm-cancel:hover { background: #f1f5f9; }

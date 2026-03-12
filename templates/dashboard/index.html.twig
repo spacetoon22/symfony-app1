@@ -6,171 +6,388 @@
     <title>AssureX – Dashboard</title>
     <link rel="stylesheet" href="{{ asset('css/dash.css') }}">
     <link rel="icon" type="image/png" href="{{ asset('images/logo.png') }}">
-
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
-    
-</head>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+    <style>
+    /* ── Chart panel extras ── */
+    .chart-panel {
+        background: var(--panel, #1a1f2e);
+        border: 1px solid rgba(201,168,76,.12);
+        border-radius: 14px;
+        padding: 0;
+        overflow: hidden;
+        animation: fadeUp .4s ease both;
+        animation-delay: .2s;
+    }
 
+    .chart-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 1.2rem 1.5rem;
+        border-bottom: 1px solid rgba(255,255,255,.05);
+        flex-wrap: wrap;
+        gap: .75rem;
+    }
+
+    .chart-head h3 { font-size: 1rem; font-weight: 700; margin: 0; }
+    .chart-head .sub { font-size: .75rem; color: var(--slate, #8892a4); margin-top: .15rem; }
+
+    /* Month selector */
+    .month-select-wrap { display: flex; align-items: center; gap: .5rem; }
+    .month-select-wrap label { font-size: .78rem; color: var(--slate, #8892a4); white-space: nowrap; }
+    .month-select {
+        padding: .4rem .8rem;
+        border: 1px solid rgba(201,168,76,.25);
+        border-radius: 8px;
+        background: rgba(255,255,255,.04);
+        color: var(--white, #fff);
+        font-size: .82rem;
+        font-family: inherit;
+        cursor: pointer;
+        outline: none;
+        transition: border-color .2s;
+    }
+    .month-select:focus { border-color: rgba(201,168,76,.6); }
+    .month-select option { background: #1a1f2e; color: #fff; }
+
+    /* Total badge */
+    .total-badge {
+        font-size: .78rem;
+        padding: .3rem .75rem;
+        border-radius: 20px;
+        background: rgba(201,168,76,.12);
+        color: var(--gold, #c9a84c);
+        font-weight: 700;
+        white-space: nowrap;
+    }
+
+    /* Chart area */
+    .chart-body { padding: 1.5rem; position: relative; }
+    .chart-canvas-wrap { position: relative; height: 100px; width: 200px; }
+
+    /* Empty state */
+    .chart-empty {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 260px;
+        color: var(--slate, #8892a4);
+        gap: .75rem;
+    }
+    .chart-empty .ei { font-size: 2.5rem; }
+    .chart-empty p { font-size: .88rem; }
+
+    /* Commercial table below chart */
+    .commercial-table { margin-top: 1.25rem; }
+    .ct-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: .6rem 0;
+        border-bottom: 1px solid rgba(255,255,255,.04);
+        gap: 1rem;
+    }
+    .ct-row:last-child { border-bottom: none; }
+    .ct-name { font-size: .88rem; font-weight: 500; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .ct-bar-wrap { flex: 2; height: 6px; background: rgba(255,255,255,.06); border-radius: 4px; overflow: hidden; }
+    .ct-bar { height: 100%; border-radius: 4px; background: linear-gradient(90deg, #c9a84c, #f0d080); transition: width .5s ease; }
+    .ct-amount { font-size: .85rem; font-weight: 700; color: var(--gold, #c9a84c); min-width: 90px; text-align: right; }
+    .ct-pct { font-size: .72rem; color: var(--slate, #8892a4); min-width: 35px; text-align: right; }
+
+    /* Year line chart */
+    .year-chart-wrap { padding: 1rem 1.5rem 1.5rem; border-top: 1px solid rgba(255,255,255,.05); }
+    .year-chart-title { font-size: .75rem; text-transform: uppercase; letter-spacing: .07em; color: var(--slate, #8892a4); margin-bottom: .75rem; }
+    .year-canvas-wrap { position: relative; height: 100px; }
+
+    /* Light mode overrides */
+    body.light-mode .month-select { background: #f8fafc; color: #1e293b; border-color: #e2e8f0; }
+    body.light-mode .month-select option { background: #f8fafc; color: #1e293b; }
+    body.light-mode .chart-panel { background: #ffffff; border-color: #e2e8f0; }
+    body.light-mode .ct-bar-wrap { background: rgba(0,0,0,.06); }
+    body.light-mode .year-chart-wrap { border-color: #e2e8f0; }
+    </style>
+</head>
 <body>
 
-    <!-- ═══════════════════════════════
-         SIDEBAR
-    ═══════════════════════════════ -->
-    <aside class="sidebar">
-        <div class="sidebar__brand">
-            <div class="brand-icon">🛡️</div>
-            <div class="brand-text">
-                <h1>Assure<span>X</span></h1>
-                <p>Assurance Platform</p>
-            </div>
-        </div>
-
-        <nav class="sidebar__nav">
-            <div class="nav-section-label">Overview</div>
-            <a href="#" class="nav-item active">
-                <span class="icon">📊</span> Dashboard
-            </a>
-
-
-
-            <a href="{{ path('app_pros') }}" class="nav-item">
-                <span class="icon">📋</span> Prospects
-                <span class="badge red">0</span>
-            </a>
-
-
-
-
-            <div class="nav-section-label">Management</div>
-            {# ✅ Fixed #}
-            <a href="{{ path('app_users') }}" class="nav-item">
-                <span class="icon">👤</span> Users
-
-            <a href="{{ path('app_settings') }}" class="nav-item">
-                <span class="icon">⚙️</span> Settings
-            </a>
-        </nav>
-
-        <div class="sidebar__footer">
-            <div class="user-chip">
-                <div class="avatar">{{ (app.user.userIdentifier ?? 'A')|first|upper }}</div>
-
-                <div class="user-info">
-                    <p>{{ app.user.userIdentifier ?? 'Admin' }}</p>
-                    <span>Administrator</span>
-                </div>
-                <a href="{{ logout_path() }}" class="logout-icon" title="Logout">↩</a>
-            </div>
-        </div>
-    </aside>
-
-    <!-- ═══════════════════════════════
-         MAIN
-    ═══════════════════════════════ -->
-    <div class="main">
-
-        <!-- Topbar -->
-        <header class="topbar">
-            <div>
-                <div class="topbar__title">Dashboard</div>
-                <div class="topbar__sub" id="currentDate"></div>
-            </div>
-            <div class="topbar__spacer"></div>            
-            <button class="theme-toggle" id="themeToggle" title="Toggle theme">🌙</button>
-
-        </header>
-        <div class="panel" style="animation-delay:.2s">
-            <div class="panel__head">
-                <div>
-                    <h3>💰 Premium Revenue</h3>
-                    <div class="sub">Approved dossiers only</div>
-                </div>
-                <span class="kpi-trend trend-up" style="font-size:.78rem;padding:.3rem .7rem;border-radius:20px;">
-                    {{ totalPremium|number_format(0, '.', ',') }} MAD
-                </span>
-            </div>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Commercial</th>
-                        <th style="text-align:right">Revenue</th>
-                        <th style="text-align:right">Share</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for name, amount in premiumByCommercial %}
-                    <tr>
-                        <td>
-                            <div class="client-name">{{ name }}</div>
-                        </td>
-                        <td style="text-align:right; color:var(--gold); font-weight:600;">
-                            {{ amount|number_format(0, '.', ',') }} MAD
-                        </td>
-                        <td style="text-align:right;">
-                            <div style="display:flex;align-items:center;justify-content:flex-end;gap:.5rem;">
-                                <div style="width:80px;height:5px;border-radius:3px;background:rgba(255,255,255,.08);">
-                                    <div style="width:{{ totalPremium > 0 ? ((amount / totalPremium) * 100)|round : 0 }}%;height:100%;border-radius:3px;background:var(--gold);"></div>
-                                </div>
-                                <span style="font-size:.75rem;color:var(--slate);min-width:35px;">
-                                    {{ totalPremium > 0 ? ((amount / totalPremium) * 100)|round : 0 }}%
-                                </span>
-                            </div>
-                        </td>
-                    </tr>
-                    {% else %}
-                    <tr>
-                        <td colspan="3" style="text-align:center;color:var(--slate);padding:1.5rem;">
-                            No approved dossiers yet
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-            <!-- Total row -->
-            <div style="padding:.9rem 1.4rem;border-top:1px solid rgba(201,168,76,.15);display:flex;justify-content:space-between;align-items:center;">
-                <span style="font-size:.78rem;text-transform:uppercase;letter-spacing:.06em;color:var(--slate);">Total</span>
-                <span style="font-family:'Playfair Display',serif;font-size:1.2rem;color:var(--white);">
-                    {{ totalPremium|number_format(0, '.', ',') }} MAD
-                </span>
-            </div>
+<!-- ═══ SIDEBAR ═══ -->
+<aside class="sidebar">
+    <div class="sidebar__brand">
+        <div class="brand-icon">🛡️</div>
+        <div class="brand-text">
+            <h1>Assure<span>X</span></h1>
+            <p>Assurance Platform</p>
         </div>
     </div>
-    <!-- /main -->
-    <script>
-        const toggle = document.getElementById('themeToggle');
-        // Remember preference across pages
-        if (localStorage.getItem('theme') === 'light') {
-            document.body.classList.add('light-mode');
-            toggle.textContent = '☀️';
+    <nav class="sidebar__nav">
+        <div class="nav-section-label">Overview</div>
+        <a href="#" class="nav-item active"><span class="icon">📊</span> Dashboard</a>
+        <a href="{{ path('app_pros') }}" class="nav-item"><span class="icon">📋</span> Prospects<span class="badge red">0</span></a>
+        <div class="nav-section-label">Management</div>
+        <a href="{{ path('app_users') }}" class="nav-item"><span class="icon">👤</span> Users</a>
+        <a href="{{ path('app_settings') }}" class="nav-item"><span class="icon">⚙️</span> Settings</a>
+    </nav>
+    <div class="sidebar__footer">
+        <div class="user-chip">
+            <div class="avatar">{{ (app.user.userIdentifier ?? 'A')|first|upper }}</div>
+            <div class="user-info">
+                <p>{{ app.user.userIdentifier ?? 'Admin' }}</p>
+                <span>Administrator</span>
+            </div>
+            <a href="{{ logout_path() }}" class="logout-icon" title="Logout">↩</a>
+        </div>
+    </div>
+</aside>
+
+<!-- ═══ MAIN ═══ -->
+<div class="main">
+    <header class="topbar">
+        <div>
+            <div class="topbar__title">Dashboard</div>
+            <div class="topbar__sub" id="currentDate"></div>
+        </div>
+        <div class="topbar__spacer"></div>
+        <button class="theme-toggle" id="themeToggle" title="Toggle theme">🌙</button>
+    </header>
+
+    <!-- ── Revenue Chart Panel ── -->
+    <div class="chart-panel">
+
+        <!-- Head: title + month selector + total -->
+        <div class="chart-head">
+            <div>
+                <h3>💰 Premium Revenue</h3>
+                <div class="sub">Approved dossiers · {{ selectedMonthName }} {{ selectedYear }}</div>
+            </div>
+
+            <div style="display:flex; align-items:center; gap:1rem; flex-wrap:wrap;">
+                <!-- Month selector -->
+                <div class="month-select-wrap">
+                    <label for="monthPicker">📅 Month:</label>
+                    <select class="month-select" id="monthPicker" onchange="changeMonth(this.value)">
+                        {% for key, m in availableMonths %}
+                            <option value="{{ m.month }}-{{ m.year }}"
+                                {% if m.month == selectedMonth and m.year == selectedYear %}selected{% endif %}>
+                                {{ m.label }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <span class="total-badge">
+                    {{ totalPremium|number_format(0, '.', ',') }} MAD
+                </span>
+            </div>
+        </div>
+
+        <!-- Bar chart -->
+        <div class="chart-body">
+            {% if premiumByCommercial is not empty %}
+
+                <div class="chart-canvas-wrap">
+                    <canvas id="revenueChart"></canvas>
+                </div>
+
+                <!-- Commercial breakdown table below chart -->
+                <div class="commercial-table">
+                    {% for name, amount in premiumByCommercial %}
+                    <div class="ct-row">
+                        <div class="ct-name" title="{{ name }}">{{ name }}</div>
+                        <div class="ct-bar-wrap">
+                            <div class="ct-bar" style="width:{{ totalPremium > 0 ? ((amount / totalPremium) * 100)|round : 0 }}%"></div>
+                        </div>
+                        <div class="ct-amount">{{ amount|number_format(0, '.', ',') }} MAD</div>
+                        <div class="ct-pct">{{ totalPremium > 0 ? ((amount / totalPremium) * 100)|round : 0 }}%</div>
+                    </div>
+                    {% endfor %}
+
+                    <!-- Total row -->
+                    <div class="ct-row" style="border-top:1px solid rgba(201,168,76,.2); margin-top:.5rem; padding-top:.75rem;">
+                        <div class="ct-name" style="font-weight:700; text-transform:uppercase; font-size:.75rem; letter-spacing:.05em; color:var(--slate);">Total</div>
+                        <div class="ct-bar-wrap"></div>
+                        <div class="ct-amount" style="font-family:'Playfair Display',serif; font-size:1.05rem;">{{ totalPremium|number_format(0, '.', ',') }} MAD</div>
+                        <div class="ct-pct">100%</div>
+                    </div>
+                </div>
+
+            {% else %}
+                <div class="chart-empty">
+                    <div class="ei">📭</div>
+                    <p>No approved dossiers for {{ selectedMonthName }} {{ selectedYear }}</p>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Year overview line chart -->
+        <div class="year-chart-wrap">
+            <div class="year-chart-title">📈 {{ selectedYear }} — Monthly Revenue Overview</div>
+            <div class="year-canvas-wrap">
+                <canvas id="yearChart"></canvas>
+            </div>
+        </div>
+
+    </div><!-- /chart-panel -->
+
+</div><!-- /main -->
+
+<script>
+// ── Theme toggle ──
+const toggle = document.getElementById('themeToggle');
+if (localStorage.getItem('theme') === 'light') {
+    document.body.classList.add('light-mode');
+    toggle.textContent = '☀️';
+}
+toggle.addEventListener('click', () => {
+    document.body.classList.toggle('light-mode');
+    const isLight = document.body.classList.contains('light-mode');
+    toggle.textContent = isLight ? '☀️' : '🌙';
+    localStorage.setItem('theme', isLight ? 'light' : 'dark');
+});
+
+// ── Date ──
+function updateDateTime() {
+    document.getElementById('currentDate').textContent =
+        new Date().toLocaleDateString('en-US', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+}
+updateDateTime();
+setInterval(updateDateTime, 60000);
+
+// ── Month change → reload with query param ──
+function changeMonth(val) {
+    const [month, year] = val.split('-');
+    window.location.href = '{{ path('app_dashboard') }}?month=' + month + '&year=' + year;
+}
+
+// ── Chart.js data from Symfony ──
+const chartLabels  = {{ chartLabels|raw }};
+const chartData    = {{ chartData|raw }};
+const monthlyTotals = {{ monthlyTotals|raw }};
+const selectedMonth = {{ selectedMonth }};
+
+const isDark = !document.body.classList.contains('light-mode');
+const gridColor   = isDark ? 'rgba(255,255,255,.06)' : 'rgba(0,0,0,.06)';
+const tickColor   = isDark ? '#8892a4' : '#64748b';
+const tooltipBg   = isDark ? '#1a1f2e' : '#ffffff';
+const tooltipText = isDark ? '#ffffff' : '#1e293b';
+
+// ── Bar chart: revenue per commercial ──
+const barCtx = document.getElementById('revenueChart');
+if (barCtx && chartLabels.length > 0) {
+    new Chart(barCtx, {
+        type: 'bar',
+        data: {
+            labels: chartLabels,
+            datasets: [{
+                label: 'Revenue (MAD)',
+                data: chartData,
+                backgroundColor: chartLabels.map((_, i) => {
+                    const colors = [
+                        'rgba(201,168,76,.85)',
+                        'rgba(96,165,250,.85)',
+                        'rgba(52,211,153,.85)',
+                        'rgba(251,146,60,.85)',
+                        'rgba(167,139,250,.85)',
+                        'rgba(244,114,182,.85)',
+                    ];
+                    return colors[i % colors.length];
+                }),
+                borderColor: 'transparent',
+                borderRadius: 8,
+                borderSkipped: false,
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    backgroundColor: tooltipBg,
+                    titleColor: tooltipText,
+                    bodyColor: tooltipText,
+                    borderColor: 'rgba(201,168,76,.3)',
+                    borderWidth: 1,
+                    padding: 10,
+                    callbacks: {
+                        label: ctx => ' ' + ctx.parsed.y.toLocaleString('fr-MA') + ' MAD'
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    grid: { display: false },
+                    ticks: { color: tickColor, font: { size: 11 } }
+                },
+                y: {
+                    grid: { color: gridColor },
+                    ticks: {
+                        color: tickColor,
+                        font: { size: 11 },
+                        callback: v => v.toLocaleString('fr-MA') + ' MAD'
+                    },
+                    beginAtZero: true
+                }
+            }
         }
-        toggle.addEventListener('click', () => {
-            document.body.classList.toggle('light-mode');
-            const isLight = document.body.classList.contains('light-mode');
-            toggle.textContent = isLight ? '☀️' : '🌙';
-            localStorage.setItem('theme', isLight ? 'light' : 'dark');
-        });
+    });
+}
 
-        function updateDateTime() {
-            const now = new Date();
-
-            const options = {
-            weekday: 'long',
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric'
-        };
-
-        const formattedDate = now.toLocaleDateString('en-US', options);
-
-        document.getElementById('currentDate').textContent = formattedDate;
+// ── Line chart: full year monthly totals ──
+const yearCtx = document.getElementById('yearChart');
+if (yearCtx) {
+    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    new Chart(yearCtx, {
+        type: 'line',
+        data: {
+            labels: months,
+            datasets: [{
+                data: monthlyTotals,
+                borderColor: '#c9a84c',
+                backgroundColor: 'rgba(201,168,76,.08)',
+                borderWidth: 2,
+                pointRadius: months.map((_, i) => i + 1 === selectedMonth ? 5 : 2),
+                pointBackgroundColor: months.map((_, i) => i + 1 === selectedMonth ? '#c9a84c' : 'transparent'),
+                pointBorderColor: '#c9a84c',
+                tension: 0.4,
+                fill: true,
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    backgroundColor: tooltipBg,
+                    titleColor: tooltipText,
+                    bodyColor: tooltipText,
+                    borderColor: 'rgba(201,168,76,.3)',
+                    borderWidth: 1,
+                    callbacks: {
+                        label: ctx => ' ' + ctx.parsed.y.toLocaleString('fr-MA') + ' MAD'
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    grid: { display: false },
+                    ticks: { color: tickColor, font: { size: 10 } }
+                },
+                y: {
+                    grid: { color: gridColor },
+                    ticks: {
+                        color: tickColor,
+                        font: { size: 10 },
+                        callback: v => v >= 1000 ? (v/1000).toFixed(0)+'k' : v
+                    },
+                    beginAtZero: true
+                }
+            }
         }
-
-        // Run once on load
-        updateDateTime();
-
-        // If you also want it to auto-update every minute:
-        setInterval(updateDateTime, 60000);
-    </script>
+    });
+}
+</script>
 </body>
 </html>
