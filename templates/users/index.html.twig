@@ -8,6 +8,90 @@
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ asset('css/users.css') }}">
     <link rel="icon" type="image/png" href="{{ asset('images/logo.png') }}">
+    <style>
+        /* ── View clients button in row actions ── */
+        .btn-clients {
+            display: inline-flex; align-items: center; gap: .3rem;
+            padding: .25rem .65rem; border-radius: 6px; font-size: .76rem; font-weight: 600;
+            background: rgba(201,168,76,.12); color: #c9a84c;
+            border: 1px solid rgba(201,168,76,.25); cursor: pointer;
+            transition: background .15s; white-space: nowrap; font-family: inherit;
+        }
+        .btn-clients:hover { background: rgba(201,168,76,.22); }
+
+        /* ══════════════════════════════════
+           CLIENT MODAL  (shared styles)
+        ══════════════════════════════════ */
+        .cm-overlay {
+            display: none; position: fixed; inset: 0; z-index: 1000;
+            background: rgba(0,0,0,.65); backdrop-filter: blur(3px);
+            align-items: flex-start; justify-content: center;
+            padding: 1.5rem; overflow-y: auto;
+        }
+        .cm-overlay.open { display: flex; }
+        .cm-modal {
+            background: #0f2035; border: 1px solid rgba(201,168,76,.25); border-radius: 16px;
+            width: 100%; max-width: 720px; min-height: 60vh; max-height: none;
+            display: flex; flex-direction: column; animation: cmIn .22s ease; overflow: hidden;
+            margin: auto;
+        }
+        @keyframes cmIn { from { opacity:0; transform:translateY(16px) scale(.98); } to { opacity:1; transform:none; } }
+        body.light-mode .cm-modal { background: #ffffff; border-color: rgba(201,168,76,.3); }
+
+        .cm-head { display:flex; align-items:center; gap:.85rem; padding:1.1rem 1.4rem; border-bottom:1px solid rgba(201,168,76,.12); flex-shrink:0; }
+        .cm-head-avatar { width:38px; height:38px; border-radius:50%; background:linear-gradient(135deg,#c9a84c,#7a5c1e); color:#0d1b2a; font-weight:700; font-size:.9rem; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+        .cm-head-title { font-family:'Playfair Display',serif; font-size:1rem; color:#f0f4ff; }
+        body.light-mode .cm-head-title { color:#1a202c; }
+        .cm-head-sub { font-size:.75rem; color:#8892b0; margin-top:.1rem; }
+        .cm-close { margin-left:auto; width:32px; height:32px; border-radius:8px; background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.08); color:#8892b0; font-size:1rem; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:background .15s,color .15s; flex-shrink:0; }
+        .cm-close:hover { background:rgba(248,113,113,.15); color:#f87171; border-color:rgba(248,113,113,.2); }
+
+        .cm-body { padding:1.1rem 1.4rem; flex:1; display:flex; flex-direction:column; gap:.65rem; }
+
+        .cm-loading, .cm-empty { text-align:center; padding:2.5rem 1rem; color:#8892b0; font-size:.88rem; }
+        .cm-loading .spin { display:inline-block; width:28px; height:28px; border:2px solid rgba(201,168,76,.2); border-top-color:#c9a84c; border-radius:50%; animation:spin .7s linear infinite; margin-bottom:.75rem; }
+        @keyframes spin { to { transform:rotate(360deg); } }
+
+        .cm-client { background:rgba(255,255,255,.03); border:1px solid rgba(201,168,76,.1); border-radius:10px; overflow:hidden; }
+        body.light-mode .cm-client { background:#f7f8fc; border-color:#e2e8f0; }
+
+        .cm-client-head { display:flex; align-items:center; gap:.85rem; flex-wrap:wrap; padding:.75rem 1rem; cursor:pointer; user-select:none; transition:background .15s; }
+        .cm-client-head:hover { background:rgba(201,168,76,.05); }
+        .cm-client.open .cm-client-head { background:rgba(201,168,76,.07); border-bottom:1px solid rgba(201,168,76,.1); }
+
+        .cm-avatar { width:36px; height:36px; border-radius:50%; background:linear-gradient(135deg,#c9a84c,#7a5c1e); color:#0d1b2a; font-weight:700; font-size:.8rem; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+        .cm-client-name { font-size:.88rem; font-weight:600; color:#f0f4ff; flex:1; }
+        body.light-mode .cm-client-name { color:#1a202c; }
+        .cm-client-contact { font-size:.74rem; color:#8892b0; margin-top:.1rem; }
+
+        .cm-ins-badges { display:flex; gap:.35rem; flex-wrap:wrap; }
+        .cm-ins-badge { font-size:.68rem; font-weight:600; padding:.15rem .5rem; border-radius:20px; background:rgba(201,168,76,.12); color:#c9a84c; border:1px solid rgba(201,168,76,.2); white-space:nowrap; }
+
+        .cm-chevron { color:#c9a84c; font-size:.78rem; margin-left:auto; flex-shrink:0; transition:transform .2s; }
+        .cm-client.open .cm-chevron { transform:rotate(180deg); }
+
+        .cm-contracts { display:none; padding:.65rem 1rem .85rem; flex-direction:column; gap:.5rem; }
+        .cm-client.open .cm-contracts { display:flex; }
+
+        .cm-contract { background:rgba(255,255,255,.03); border:1px solid rgba(255,255,255,.06); border-radius:8px; padding:.65rem .85rem; display:flex; flex-wrap:wrap; gap:.5rem .85rem; align-items:center; }
+        body.light-mode .cm-contract { background:#ffffff; border-color:#e2e8f0; }
+
+        .cm-contract-type { font-size:.85rem; font-weight:600; color:#f0f4ff; display:flex; align-items:center; gap:.3rem; }
+        body.light-mode .cm-contract-type { color:#1a202c; }
+        .cm-contract-plan { font-size:.75rem; color:#8892b0; }
+        .cm-contract-detail { font-size:.75rem; color:#8892b0; }
+        .cm-contract-detail strong { color:#ccd6f6; font-weight:500; }
+        body.light-mode .cm-contract-detail strong { color:#2d3748; }
+
+        .cm-pill { display:inline-block; padding:.18rem .55rem; border-radius:20px; font-size:.69rem; font-weight:600; margin-left:auto; white-space:nowrap; }
+        .cm-pill-pending  { background:rgba(251,191,36,.12);  color:#fbbf24; }
+        .cm-pill-claimed  { background:rgba(201,168,76,.15);  color:#c9a84c; }
+        .cm-pill-review   { background:rgba(201,168,76,.15);  color:#c9a84c; }
+        .cm-pill-approved { background:rgba(45,212,191,.12);  color:#2dd4bf; }
+        .cm-pill-rejected { background:rgba(248,113,113,.12); color:#f87171; }
+
+        ::-webkit-scrollbar { width:5px; } ::-webkit-scrollbar-track { background:transparent; } ::-webkit-scrollbar-thumb { background:rgba(201,168,76,.2); border-radius:10px; }
+    </style>
 </head>
 <body>
 
@@ -15,39 +99,18 @@
 <aside class="sidebar">
     <div class="sidebar__brand">
         <div class="brand-icon">🛡️</div>
-        <div class="brand-text">
-            <h1>Assure<span>X</span></h1>
-            <p>Assurance Platform</p>
-        </div>
+        <div class="brand-text"><h1>Assure<span>X</span></h1><p>Assurance Platform</p></div>
     </div>
-
     <nav class="sidebar__nav">
         <div class="nav-section-label">Overview</div>
-        <a href="{{ path('app_dashboard') }}" class="nav-item">
-            <span class="icon">📊</span> Dashboard
-        </a>
-
-
-
+        <a href="{{ path('app_dashboard') }}" class="nav-item"><span class="icon">📊</span> Dashboard</a>
         <div class="nav-section-label">Management</div>
-        <a href="{{ path('app_users') }}" class="nav-item active">
-            <span class="icon">👤</span> Users
-        </a>
-
-        <a href="{{ path('app_settings') }}" class="nav-item">
-                <span class="icon">⚙️</span> Settings
-        </a>
+        <a href="{{ path('app_users') }}" class="nav-item active"><span class="icon">👤</span> Users</a>
+        <a href="{{ path('app_settings') }}" class="nav-item"><span class="icon">⚙️</span> Settings</a>
     </nav>
-
     <div class="sidebar__footer">
         <div class="user-chip">
-            <div class="avatar">
-                {% if app.user %}
-                    {{ (app.user.userIdentifier ?? 'A')|first|upper }}
-                {% else %}
-                    A
-                {% endif %}
-            </div>
+            <div class="avatar">{% if app.user %}{{ (app.user.userIdentifier ?? 'A')|first|upper }}{% else %}A{% endif %}</div>
             <div class="user-info">
                 <p>{{ app.user ? app.user.userIdentifier : 'Admin' }}</p>
                 <span>Administrator</span>
@@ -59,26 +122,17 @@
 
 <!-- ── Main ── -->
 <div class="main">
-
     <header class="topbar">
         <div>
             <div class="topbar__title">User Management</div>
             <div class="topbar__sub">Manage platform accounts &amp; roles</div>
         </div>
-
     </header>
 
     <div class="content">
+        {% for message in app.flashes('success') %}<div class="flash-success">✅ {{ message }}</div>{% endfor %}
+        {% for message in app.flashes('error') %}<div class="flash-error">⚠️ {{ message }}</div>{% endfor %}
 
-        {# Flash messages #}
-        {% for message in app.flashes('success') %}
-            <div class="flash-success">✅ {{ message }}</div>
-        {% endfor %}
-        {% for message in app.flashes('error') %}
-            <div class="flash-error">⚠️ {{ message }}</div>
-        {% endfor %}
-
-        {# Page header #}
         <div class="page-header">
             <div>
                 <h2>All Users</h2>
@@ -87,38 +141,27 @@
             <a href="{{ path('app_register') }}" class="btn-add">➕ Add User</a>
         </div>
 
-        {# Stats strip #}
         <div class="stats-strip">
             <div class="stat-card">
                 <div class="stat-icon">👥</div>
-                <div>
-                    <div class="stat-val">{{ users|default([])|length }}</div>
-                    <div class="stat-lbl">Total Users</div>
-                </div>
+                <div><div class="stat-val">{{ users|default([])|length }}</div><div class="stat-lbl">Total Users</div></div>
             </div>
             <div class="stat-card">
                 <div class="stat-icon">🛡️</div>
                 <div>
-                    <div class="stat-val">
-                        {{ users|default([])|filter(u => u.roles|default([]) is iterable and 'ROLE_ADMIN' in u.roles)|length }}
-                    </div>
+                    <div class="stat-val">{{ users|default([])|filter(u => u.roles|default([]) is iterable and 'ROLE_ADMIN' in u.roles)|length }}</div>
                     <div class="stat-lbl">Admins</div>
                 </div>
             </div>
             <div class="stat-card">
                 <div class="stat-icon">💼</div>
                 <div>
-                    <div class="stat-val">
-
-                        {{ users|default([])|filter(u => u.roles|default([]) is iterable and 'ROLE_COMMERCIAL' in u.roles)|length }}
-
-                    </div>
-                    <div class="stat-lbl">COMMERCIAL</div>
+                    <div class="stat-val">{{ users|default([])|filter(u => u.roles|default([]) is iterable and 'ROLE_COMMERCIAL' in u.roles)|length }}</div>
+                    <div class="stat-lbl">Commercial</div>
                 </div>
             </div>
         </div>
 
-        {# Table panel #}
         <div class="panel">
             <div class="panel__head">
                 <h3>Accounts</h3>
@@ -130,9 +173,7 @@
                 </div>
             </div>
 
-             
             <div class="table-wrap">
-                {# 1. Open the check #}
                 {% if users|default([]) is empty %}
                     <div class="empty-state">
                         <div class="big">👤</div>
@@ -150,15 +191,9 @@
                             </tr>
                         </thead>
                         <tbody>
-                            {# 2. Only ONE loop goes here #}
                             {% for user in users %}
-                            <tr data-role="
-                                {%- if 'ROLE_ADMIN' in user.roles -%}admin
-                                {%- elseif 'ROLE_COMMERCIAL' in user.roles -%}commercial
-                                {%- else -%}user
-                                {%- endif -%}
-                            ">
-                                <td style="color: var(--slate); font-size:.8rem;">{{ user.id }}</td>
+                            <tr data-role="{%- if 'ROLE_ADMIN' in user.roles -%}admin{%- elseif 'ROLE_COMMERCIAL' in user.roles -%}commercial{%- else -%}user{%- endif -%}">
+                                <td style="color:var(--slate);font-size:.8rem;">{{ user.id }}</td>
                                 <td>
                                     <div class="user-cell">
                                         <div class="u-avatar">{{ user.username|first|upper }}</div>
@@ -168,7 +203,6 @@
                                         </div>
                                     </div>
                                 </td>
-
                                 <td>
                                     {% if 'ROLE_ADMIN' in user.roles %}
                                         <span class="role-pill role-admin">🛡️ Admin</span>
@@ -178,13 +212,19 @@
                                         <span class="role-pill role-user">👤 User</span>
                                     {% endif %}
                                 </td>
-
                                 <td><span class="pwd-mask">••••••••••••</span></td>
                                 <td>
                                     <div class="row-actions">
-                                        
+                                        {# 👁 View clients — only for commercial roles #}
+                                        {% if 'ROLE_COMMERCIAL' in user.roles %}
+                                            <button class="btn-clients"
+                                                    onclick="openClientModal({{ user.id }}, '{{ user.username|e('js') }}')">
+                                                👥 Clients
+                                            </button>
+                                        {% endif %}
                                         <a href="{{ path('app_edit', {id: user.id}) }}" class="row-btn" title="Edit">✏️</a>
-                                        <form method="post" action="{{ path('app_users_delete', {id: user.id}) }}" onsubmit="return confirm('Delete this user?');" style="display:inline;">
+                                        <form method="post" action="{{ path('app_users_delete', {id: user.id}) }}"
+                                              onsubmit="return confirm('Delete this user?');" style="display:inline;">
                                             <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ user.id) }}">
                                             <button type="submit" class="row-btn danger" title="Delete">🗑️</button>
                                         </form>
@@ -194,19 +234,31 @@
                             {% endfor %}
                         </tbody>
                     </table>
-                {# 3. Close the check ONLY ONCE #}
                 {% endif %}
             </div>
-
         </div>
+    </div>
+</div>
 
-    </div>{# /content #}
-</div>{# /main #}
+<!-- ══ CLIENT MODAL ══ -->
+<div class="cm-overlay" id="cmOverlay" onclick="handleOverlayClick(event)">
+    <div class="cm-modal">
+        <div class="cm-head">
+            <div class="cm-head-avatar" id="cmAvatar">?</div>
+            <div>
+                <div class="cm-head-title" id="cmTitle">Loading…</div>
+                <div class="cm-head-sub"   id="cmSub"></div>
+            </div>
+            <button class="cm-close" onclick="closeClientModal()">✕</button>
+        </div>
+        <div class="cm-body" id="cmBody">
+            <div class="cm-loading"><div class="spin"></div><div>Loading clients…</div></div>
+        </div>
+    </div>
+</div>
 
 <script>
-
-
-    // Role filter tabs
+    // Role filter
     function filterRole(role, btn) {
         document.querySelectorAll('.ftab').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
@@ -214,7 +266,79 @@
             row.style.display = (role === 'all' || row.dataset.role === role) ? '' : 'none';
         });
     }
-</script>
 
+    // ════════════════════════════════════
+    //  CLIENT MODAL — identical logic
+    // ════════════════════════════════════
+    const typeIcon  = { taxi:'🚖', home:'🏠', auto:'🚗', health:'❤️' };
+    const typeLabel = { taxi:'Taxi', home:'Home', auto:'Auto', health:'Health' };
+
+    function statusPill(s) {
+        const map = { pending:['cm-pill-pending','⏳ Pending'], claimed:['cm-pill-claimed','🤝 Claimed'], review:['cm-pill-review','🔎 Review'], approved:['cm-pill-approved','✅ Approved'], rejected:['cm-pill-rejected','❌ Rejected'] };
+        const [cls, label] = map[s] || ['cm-pill-pending', s];
+        return `<span class="cm-pill ${cls}">${label}</span>`;
+    }
+
+    function openClientModal(userId, name) {
+        document.getElementById('cmOverlay').classList.add('open');
+        document.getElementById('cmAvatar').textContent = name.charAt(0).toUpperCase();
+        document.getElementById('cmTitle').textContent  = name;
+        document.getElementById('cmSub').textContent    = 'Loading clients…';
+        document.getElementById('cmBody').innerHTML     = '<div class="cm-loading"><div class="spin"></div><div>Loading clients…</div></div>';
+
+        fetch(`/clients/by-commercial/${userId}`)
+            .then(r => r.json())
+            .then(data => {
+                document.getElementById('cmSub').textContent = data.total + ' client' + (data.total !== 1 ? 's' : '');
+
+                if (!data.clients || data.clients.length === 0) {
+                    document.getElementById('cmBody').innerHTML = '<div class="cm-empty">📭 No clients assigned to this commercial yet.</div>';
+                    return;
+                }
+
+                let html = '';
+                data.clients.forEach((client, idx) => {
+                    const initials = client.name.split(' ').map(p => p[0]?.toUpperCase()||'').join('').slice(0,2);
+                    const badges   = client.contracts.map(c => `<span class="cm-ins-badge">${typeIcon[c.type]||'📋'} ${typeLabel[c.type]||c.type||'?'}</span>`).join('');
+                    const contracts = client.contracts.map(c => `
+                        <div class="cm-contract">
+                            <div>
+                                <div class="cm-contract-type">${typeIcon[c.type]||'📋'} ${typeLabel[c.type]||c.type||'Unknown'} Insurance</div>
+                                <div class="cm-contract-plan">${c.plan ? c.plan.charAt(0).toUpperCase()+c.plan.slice(1)+' plan' : 'No plan'}</div>
+                            </div>
+                            <div class="cm-contract-detail">Premium: <strong>${c.premium ? Number(c.premium).toLocaleString('fr-MA')+' MAD' : '—'}</strong></div>
+                            <div class="cm-contract-detail">From: <strong>${c.start||'—'}</strong></div>
+                            <div class="cm-contract-detail">To: <strong>${c.end||'—'}</strong></div>
+                            ${statusPill(c.status)}
+                        </div>`).join('');
+
+                    html += `
+                    <div class="cm-client" id="cmc-${idx}">
+                        <div class="cm-client-head" onclick="toggleCmc('cmc-${idx}')">
+                            <div class="cm-avatar">${initials}</div>
+                            <div style="flex:1;min-width:0;">
+                                <div class="cm-client-name">${client.name}</div>
+                                <div class="cm-client-contact">${client.email?'📧 '+client.email:''}${client.phone?' · 📞 '+client.phone:''}</div>
+                            </div>
+                            <div class="cm-ins-badges">${badges}</div>
+                            <span class="cm-chevron">▼</span>
+                        </div>
+                        <div class="cm-contracts">${contracts}</div>
+                    </div>`;
+                });
+
+                document.getElementById('cmBody').innerHTML = html;
+                if (data.clients.length === 1) document.getElementById('cmc-0')?.classList.add('open');
+            })
+            .catch(() => {
+                document.getElementById('cmBody').innerHTML = '<div class="cm-empty">⚠️ Failed to load clients.</div>';
+            });
+    }
+
+    function closeClientModal() { document.getElementById('cmOverlay').classList.remove('open'); }
+    function handleOverlayClick(e) { if (e.target === document.getElementById('cmOverlay')) closeClientModal(); }
+    function toggleCmc(id) { document.getElementById(id)?.classList.toggle('open'); }
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeClientModal(); });
+</script>
 </body>
 </html>

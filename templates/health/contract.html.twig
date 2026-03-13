@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link rel="stylesheet" href="{{ asset('css/contract.css') }}">
+<style>
+    /* ── Health-specific overrides on top of contract.css ── */
+    .header { background: linear-gradient(135deg, #881337 0%, #e11d48 100%); }
+    .status-strip { background: #fff1f2; border-bottom: 2px solid #fda4af; }
+    .ss-cell { color: #be123c; font-weight: 700; }
+    .badge-active { background: #dcfce7; color: #16a34a; padding: .2rem .6rem; border-radius: 20px; font-size: .75rem; font-weight: 700; }
+    .badge-paid   { background: #dcfce7; color: #16a34a; padding: .2rem .6rem; border-radius: 20px; font-size: .75rem; font-weight: 700; }
+    .badge-method { background: #eff6ff; color: #2563eb; padding: .2rem .6rem; border-radius: 20px; font-size: .75rem; font-weight: 700; }
+    .cov-hero { background: #fff1f2; border: 1px solid #fda4af; }
+    .cov-label { color: #be123c; }
+    .cov-value { color: #1e293b; }
+    .sec-title { color: #be123c; font-weight: 700; font-size: .82rem; text-transform: uppercase; letter-spacing: .06em; margin-bottom: .6rem; border-left: 3px solid #e11d48; padding-left: .5rem; }
+    .footer { background: #fff1f2; border-top: 2px solid #fda4af; color: #be123c; }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+    <div class="header-inner">
+        <div class="header-left">
+            <div class="logo">Assure<span>X</span></div>
+            <div class="logo-sub">Official Health Insurance Certificate</div>
+        </div>
+        <div class="header-right">
+            <div class="contract-ref">Contract #{{ '%06d'|format(dossier.id) }}</div>
+            <div class="contract-date">Issued: {{ issuedAt }}</div>
+        </div>
+    </div>
+</div>
+
+<!-- Status strip -->
+<div class="status-strip">
+    <div class="ss-cell">✅ CONFIRMED &amp; PAID</div>
+    <div class="ss-cell">❤️ HEALTH INSURANCE</div>
+    <div class="ss-cell">📋 {{ dossier.plan|upper }} PLAN</div>
+    <div class="ss-cell">👥 {{ dossier.beneficiaries ?? 1 }} BENEFICIAR{{ dossier.beneficiaries > 1 ? 'IES' : 'Y' }}</div>
+    <div class="ss-cell">💳 {{ dossier.paymentMethod ? dossier.paymentMethod|upper : 'N/A' }}</div>
+</div>
+
+<div class="body">
+
+    <!-- Coverage hero -->
+    <div class="cov-hero">
+        <div class="cov-cell">
+            <div class="cov-label">Plan</div>
+            <div class="cov-value">{{ dossier.plan|capitalize }}</div>
+        </div>
+        <div class="cov-cell">
+            <div class="cov-label">Beneficiaries</div>
+            <div class="cov-value">{{ dossier.beneficiaries ?? 1 }}</div>
+        </div>
+        <div class="cov-cell">
+            <div class="cov-label">Monthly Premium</div>
+            <div class="cov-value">{{ dossier.premium ?? 0 }} MAD</div>
+        </div>
+        <div class="cov-cell">
+            <div class="cov-label">Total Paid</div>
+            <div class="cov-value" style="color:#16a34a;">{{ totalAmount }} MAD</div>
+        </div>
+        <div class="cov-cell">
+            <div class="cov-label">Conditions</div>
+            <div class="cov-value">{{ dossier.conditions ? dossier.conditions|capitalize : 'None' }}</div>
+        </div>
+        <div class="cov-cell">
+            <div class="cov-label">Status</div>
+            <div class="cov-value"><span class="badge-active">Active</span></div>
+        </div>
+    </div>
+
+    <!-- Validity -->
+    <div class="validity">
+        <div class="val-inner">
+            <div class="val-cell">
+                <div class="val-label">Coverage Start</div>
+                <div class="val-date" style="color:#16a34a;">{{ dossier.startDate ? dossier.startDate|date('d/m/Y') : '—' }}</div>
+            </div>
+            <div class="val-arrow">&#8594;</div>
+            <div class="val-cell">
+                <div class="val-label">Coverage Expiry</div>
+                <div class="val-date" style="color:#dc2626;">{{ endDate }}</div>
+            </div>
+        </div>
+        <div class="progress-bar"><div class="progress-fill"></div></div>
+    </div>
+
+    <!-- Two columns -->
+    <div class="two-col">
+        <div class="col">
+            <div class="sec-title">👤 Policyholder</div>
+            <table class="info-table">
+                <tr><td>Full Name</td><td>{{ dossier.firstName }} {{ dossier.lastName }}</td></tr>
+                <tr><td>CIN</td><td>{{ dossier.cin ?? '—' }}</td></tr>
+                <tr><td>Date of Birth</td><td>{{ dossier.dob ? dossier.dob|date('d/m/Y') : '—' }}</td></tr>
+                <tr><td>Gender</td><td>{{ dossier.gender ? dossier.gender|capitalize : '—' }}</td></tr>
+            </table>
+        </div>
+        <div class="col-gap"></div>
+        <div class="col">
+            <div class="sec-title">📞 Contact</div>
+            <table class="info-table">
+                <tr><td>Email</td><td>{{ dossier.email }}</td></tr>
+                <tr><td>Phone</td><td>{{ dossier.phone ?? '—' }}</td></tr>
+                <tr><td>City</td><td>{{ dossier.city ?? '—' }}</td></tr>
+                <tr><td>Address</td><td>{{ dossier.address ?? '—' }}</td></tr>
+            </table>
+        </div>
+    </div>
+
+    <div class="two-col">
+        <div class="col">
+            <div class="sec-title">💳 Payment</div>
+            <table class="info-table">
+                <tr><td>Method</td><td><span class="badge-method">{{ dossier.paymentMethod ? dossier.paymentMethod|capitalize : '—' }}</span></td></tr>
+                <tr><td>Monthly Premium</td><td>{{ dossier.premium ?? 0 }} MAD</td></tr>
+                <tr><td>Total Paid</td><td><strong>{{ totalAmount }} MAD</strong></td></tr>
+                <tr><td>Status</td><td><span class="badge-paid">Paid</span></td></tr>
+            </table>
+        </div>
+        <div class="col-gap"></div>
+        <div class="col">
+            <div class="sec-title">❤️ Medical Info</div>
+            <table class="info-table">
+                <tr><td>Pre-existing Conditions</td><td>{{ dossier.conditions ? dossier.conditions|capitalize : 'None' }}</td></tr>
+                <tr><td>Beneficiaries</td><td>{{ dossier.beneficiaries ?? 1 }}</td></tr>
+                <tr><td>Medical Notes</td><td>{{ dossier.medicalNotes ?? '—' }}</td></tr>
+                <tr><td>Assigned Commercial</td><td>{{ dossier.assignedTo ? dossier.assignedTo.email : '—' }}</td></tr>
+            </table>
+        </div>
+    </div>
+
+    <div class="two-col">
+        <div class="col">
+            <div class="sec-title">👔 Agent</div>
+            <table class="info-table">
+                <tr><td>Commercial</td><td>{{ dossier.assignedTo ? dossier.assignedTo.email : '—' }}</td></tr>
+                <tr><td>Contract #</td><td>#{{ '%06d'|format(dossier.id) }}</td></tr>
+                <tr><td>Issued</td><td>{{ issuedAt }}</td></tr>
+                <tr><td>Type</td><td>{{ dossier.type ? dossier.type|upper : 'HEALTH' }}</td></tr>
+            </table>
+        </div>
+        <div class="col-gap"></div>
+        <div class="col">
+            <div class="sec-title">🏥 Coverage Details</div>
+            <table class="info-table">
+                <tr><td>Plan</td><td>{{ dossier.plan|capitalize }}</td></tr>
+                <tr><td>Start Date</td><td>{{ dossier.startDate ? dossier.startDate|date('d/m/Y') : '—' }}</td></tr>
+                <tr><td>Expiry Date</td><td>{{ endDate }}</td></tr>
+                <tr><td>Monthly</td><td>{{ dossier.premium ?? 0 }} MAD</td></tr>
+            </table>
+        </div>
+    </div>
+
+    <!-- Terms -->
+    <div class="terms">
+        <strong>Terms &amp; Conditions:</strong> This certificate confirms that the above-named policyholder and their beneficiaries are covered under the AssureX {{ dossier.plan|capitalize }} health insurance plan for the period stated above. Coverage includes medical expenses, hospitalisation, and outpatient care as defined in the full policy document. Pre-existing conditions declared at registration are subject to a 6-month waiting period. This document serves as official proof of health insurance and payment. In case of a medical event or claim, contact your assigned commercial agent immediately with this contract reference number. Policy renewal must be completed before the expiry date to maintain continuous coverage. AssureX reserves the right to modify policy terms with 30 days prior notice.
+    </div>
+
+    <!-- Signatures -->
+    <div class="sig-table">
+        <div class="sig-cell">
+            <div class="sig-role">Client Signature</div>
+            <div class="sig-name">{{ dossier.firstName }} {{ dossier.lastName }}</div>
+        </div>
+        <div class="sig-cell">
+            <div class="sig-role">Commercial Agent</div>
+            <div class="sig-name">{{ dossier.assignedTo ? dossier.assignedTo.email : '—' }}</div>
+        </div>
+        <div class="sig-cell">
+            <div class="sig-role">Official Stamp</div>
+            <div class="sig-name" style="color:#881337;">AssureX Agency</div>
+        </div>
+    </div>
+
+</div>
+
+<!-- Footer -->
+<div class="footer">
+    <div class="ft-cell">Contract #{{ '%06d'|format(dossier.id) }} — AssureX Official Document</div>
+    <div class="ft-cell">Valid {{ dossier.startDate ? dossier.startDate|date('d/m/Y') : '—' }} → {{ endDate }} — DO NOT ALTER</div>
+</div>
+
+</body>
+</html>
