@@ -146,15 +146,7 @@
                             {% elseif dossier.status == 'rejected' %}❌ Rejected
                             {% endif %}
                         </span>
-                        <div class="doc-pills">
-                            {% for doc in ['cin','photo','medical','salary','contract'] %}
-                                {% if doc in dossier.documents %}
-                                    <span class="doc-pill doc-ok">{{ doc|upper }}</span>
-                                {% else %}
-                                    <span class="doc-pill doc-missing">{{ doc|upper }} ✗</span>
-                                {% endif %}
-                            {% endfor %}
-                        </div>
+                        
                         {% if dossier.assignedTo %}
                             <div class="claimed-by">👔 Assigned to <strong>{{ dossier.assignedTo.email }}</strong></div>
                         {% endif %}
