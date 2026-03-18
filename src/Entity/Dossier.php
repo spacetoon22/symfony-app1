@@ -94,6 +94,19 @@ class Dossier
 
     public function getType(): ?string { return $this->type; }
     public function setType(?string $v): static { $this->type = $v; return $this; }
+    
+    #[ORM\Column(type: 'date', nullable: true)]
+    private ?\DateTimeInterface $endDate = null;
+
+    #[ORM\Column(length: 30, nullable: true)]
+    private ?string $paymentMethod = null;
+
+    #[ORM\Column(nullable: true)]
+    private ?int $durationMonths = null;
+
+    public function getDurationMonths(): ?int { return $this->durationMonths; }
+    public function setDurationMonths(?int $v): static { $this->durationMonths = $v; return $this; }
+
 
     // ── Getters & Setters ──
 
@@ -174,5 +187,10 @@ class Dossier
     public function getAssignedTo(): ?User { return $this->assignedTo; }
     public function setAssignedTo(?User $v): static { $this->assignedTo = $v; return $this; }    
 
+    public function getEndDate(): ?\DateTimeInterface { return $this->endDate; }
+    public function setEndDate(?\DateTimeInterface $v): static { $this->endDate = $v; return $this; }
+
+    public function getPaymentMethod(): ?string { return $this->paymentMethod; }
+    public function setPaymentMethod(?string $v): static { $this->paymentMethod = $v; return $this; }
 
 }

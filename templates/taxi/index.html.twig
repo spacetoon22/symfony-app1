@@ -4,28 +4,24 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AssureX – Taxi Insurance Registration</title>
-    <link rel="stylesheet" href="{{ asset('css/taxi.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/taxi2.css') }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="icon" type="image/png" href="{{ asset('images/logo.png') }}">
-
 </head>
 <body>
 
-<!-- ── Sidebar ── -->
 <aside class="sidebar">
     <div class="sidebar__brand">
         <div class="brand-icon">🛡️</div>
         <div class="brand-text"><h1>Assure<span>X</span></h1><p>Assurance Platform</p></div>
     </div>
     <nav class="sidebar__nav">
-
         <div class="nav-section-label">Anssurances</div>
         <a href="{{ path('app_health') }}" class="nav-item"><span class="icon">❤️</span> Health Assurance</a>
         <a href="{{ path('app_taxi') }}" class="nav-item active"><span class="icon">🚖</span> Taxi Assurance</a>
         <a href="#" class="nav-item"><span class="icon">🏠</span> Home Assurance</a>
         <a href="#" class="nav-item"><span class="icon">🚗</span> Auto Assurance</a>
-
     </nav>
     <div class="sidebar__footer">
         <div class="user-chip">
@@ -35,7 +31,6 @@
     </div>
 </aside>
 
-<!-- ── Main ── -->
 <div class="main">
     <header class="topbar">
         <div style="margin-left:.5rem;">
@@ -46,46 +41,10 @@
 
     <div class="content">
 
-        {% if submitted is defined and submitted %}
-        <!-- ── Success screen ── -->
-        <div class="success-screen">
-            <div class="success-icon">✅</div>
-            <h2>Dossier Submitted Successfully!</h2>
-            <p>The client's taxi insurance dossier has been recorded and is now <strong>pending review</strong> by the commercial team.</p>
-            <div class="success-steps">
-                <div class="ss-step done">
-                    <span class="ss-circle">✓</span>
-                    <span>Client Info Saved</span>
-                </div>
-                <div class="ss-line done"></div>
-                <div class="ss-step active">
-                    <span class="ss-circle">2</span>
-                    <span>Commercial Review</span>
-                </div>
-                <div class="ss-line"></div>
-                <div class="ss-step">
-                    <span class="ss-circle">3</span>
-                    <span>Admin Validation</span>
-                </div>
-                <div class="ss-line"></div>
-                <div class="ss-step">
-                    <span class="ss-circle">✓</span>
-                    <span>Approved</span>
-                </div>
-            </div>
-            <div class="success-actions">
-                <a href="{{ path('app_taxi') }}" class="btn-new">➕ Submit Another Dossier</a>
-                
-            </div>
-        </div>
-
-        {% else %}
-
         {% for message in app.flashes('error') %}
             <div class="flash flash-error">⚠️ {{ message }}</div>
         {% endfor %}
 
-        <!-- Stepper -->
         <div class="stepper">
             <div class="step active">
                 <div class="step-circle">1</div>
@@ -93,12 +52,12 @@
             </div>
             <div class="step-line"></div>
             <div class="step">
-                <div class="step-circle">2</div>
+                <div class="step-circle">3</div>
                 <div class="step-label">Commercial Review</div>
             </div>
             <div class="step-line"></div>
             <div class="step">
-                <div class="step-circle">3</div>
+                <div class="step-circle">4</div>
                 <div class="step-label">Admin Validation</div>
             </div>
             <div class="step-line"></div>
@@ -110,6 +69,8 @@
 
         <form method="post" action="{{ path('app_taxi') }}" enctype="multipart/form-data">
             <input type="hidden" name="_token" value="{{ csrf_token('taxi_registration') }}">
+            {# Hidden field — price is set automatically by JS, not editable #}
+            <input type="hidden" name="premium" id="premium_hidden" value="0">
 
             <div class="form-grid">
 
@@ -175,97 +136,135 @@
                     </div>
                 </div>
 
-                <!-- Section 3: Taxi Coverage -->
+                <!-- Section 3: Coverage + Duration -->
                 <div class="form-section">
                     <div class="section-head">
                         <span class="s-icon">🚖</span>
-                        <div><h3>Taxi Coverage Details</h3><p>Plan and taxi  information</p></div>
+                        <div><h3>Taxi Coverage Details</h3><p>Plan and coverage period</p></div>
                     </div>
                     <div class="section-body">
-                        <div class="field-row triple">
+
+                        <div class="field-row">
                             <div class="field">
                                 <label>Coverage Plan <span class="req">*</span></label>
-                                <select name="plan" required>
+                                <select name="plan" id="plan_select" required onchange="onPlanChange(this.value)">
                                     <option value="">Select plan…</option>
-                                    <option value="basic">Basic</option>
-                                    <option value="standard">Standard</option>
-                                    <option value="premium">Premium</option>
-                                    <option value="family">Family</option>
+                                    <option value="basic">Basic — 3 months / 300 MAD</option>
+                                    <option value="standard">Standard — 6 months / 546 MAD</option>
+                                    <option value="premium">Premium — 12 months / 1020 MAD</option>
                                 </select>
                             </div>
                             <div class="field">
                                 <label>Start Date <span class="req">*</span></label>
-                                <input type="date" name="start_date" required>
-                            </div>
-                            <div class="field">
-                                <label>Number of Beneficiaries</label>
-                                <input type="number" name="beneficiaries" min="1" max="20" placeholder="1">
+                                <input type="date" name="start_date" id="start_date" required
+                                    onchange="recalculate()">
                             </div>
                         </div>
-                        <div class="field-row">
-                            <div class="field">
-                                <label>Pre-existing Conditions</label>
-                                <select name="conditions">
-                                    <option value="none">None</option>
 
-                                    <option value="other">Other</option>
-                                </select>
-                            </div>
-                            <div class="field">
-                                <label>Monthly Premium (MAD)</label>
-                                <input type="number" name="premium" placeholder="350" min="0">
-                            </div>
-                        </div>
+                        {# Hidden — set automatically by plan, never shown to user #}
+                        <input type="hidden" name="duration_months" id="duration_hidden" value="">
+
+                        <!-- Duration display — READ ONLY, set by plan -->
                         <div class="field">
-                            <label>Medical Notes</label>
-                            <textarea name="medical_notes" placeholder="Any relevant medical history or notes…"></textarea>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Section 4: Documents -->
-                <div class="form-section">
-
-                <!-- Section 5: Commercial Assignment -->
-                        <div class="form-section">
-                            <div class="section-head">
-                                <span class="s-icon">👔</span>
-                                <div><h3>Assign to Commercial</h3><p>The commercial who will handle this dossier</p></div>
-                            </div>
-                            <div class="section-body">
-                                <div class="field">
-                                    <label>Commercial Email <span class="req">*</span></label>
-                                    <input 
-                                        type="email" 
-                                        name="commercial_email" 
-                                        placeholder="Hana@gmail.ma" 
-                                        required
-                                    >   
-                                    <small style="color:var(--text-muted, #888); margin-top:.3rem; display:block;">
-                                        Enter the email of the commercial this client spoke with.
-                                    </small>
+                            <label>Coverage Duration &amp; Price</label>
+                            <div id="duration-display" style="
+                                display:flex; gap:.75rem; flex-wrap:wrap; margin-top:.5rem;
+                            ">
+                                <!-- Cards shown but not clickable, only selected one is highlighted -->
+                                <div class="dur-card-display" id="dc-3">
+                                    <div class="dur-box-ro">
+                                        <span class="dur-num">3</span>
+                                        <span class="dur-label">months</span>
+                                        <span class="dur-price-ro">300 MAD</span>
+                                        <span class="dur-plan-tag">Basic</span>
+                                    </div>
+                                </div>
+                                <div class="dur-card-display" id="dc-6">
+                                    <div class="dur-box-ro">
+                                        <span class="dur-badge">Popular</span>
+                                        <span class="dur-num">6</span>
+                                        <span class="dur-label">months</span>
+                                        <span class="dur-price-ro">
+                                            <span style="text-decoration:line-through;color:#94a3b8;font-size:.8rem;">600</span>
+                                            546 MAD
+                                        </span>
+                                        <span class="dur-plan-tag">Standard −9%</span>
+                                    </div>
+                                </div>
+                                <div class="dur-card-display" id="dc-12">
+                                    <div class="dur-box-ro">
+                                        <span class="dur-badge best">Best value</span>
+                                        <span class="dur-num">12</span>
+                                        <span class="dur-label">months</span>
+                                        <span class="dur-price-ro">
+                                            <span style="text-decoration:line-through;color:#94a3b8;font-size:.8rem;">1200</span>
+                                            1020 MAD
+                                        </span>
+                                        <span class="dur-plan-tag">Premium −15%</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
 
+                        <!-- Live summary — appears once start date + duration are selected -->
+                        <div id="coverage-summary" style="display:none;" class="coverage-summary-box">
+                            <div class="cs-row">
+                                <span>📅 Start</span>
+                                <strong id="cs-start">—</strong>
+                            </div>
+                            <div class="cs-divider"></div>
+                            <div class="cs-row">
+                                <span>🏁 Expires</span>
+                                <strong id="cs-end" style="color:#dc2626;">—</strong>
+                            </div>
+                            <div class="cs-divider"></div>
+                            <div class="cs-row">
+                                <span>💰 Total</span>
+                                <strong id="cs-total" style="color:#2563eb;">— MAD</strong>
+                            </div>
+                        </div>
+
                     </div>
                 </div>
 
-                <!-- Submit row -->
-                <div class="submit-row">
-                    <a href="{{ path('app_dashboard') }}" class="btn-cancel">Cancel</a>
-                    <button type="submit" class="btn-submit">📋 Submit Dossier to Prospects →</button>
+                <!-- Section 5: Commercial Assignment -->
+                <div class="form-section">
+                    <div class="section-head">
+                        <span class="s-icon">👔</span>
+                        <div><h3>Assign to Commercial</h3><p>The commercial who handled this call</p></div>
+                    </div>
+                    <div class="section-body">
+                        <div class="field">
+                            <label>Commercial Email <span class="req">*</span></label>
+                            <input type="email" name="commercial_email" placeholder="commercial@assurex.ma" required>
+                            <small style="color:var(--text-muted,#888);margin-top:.3rem;display:block;">
+                                Enter the email of the commercial this client spoke with.
+                            </small>
+                        </div>
+                    </div>
                 </div>
+
+            </div>
+
+            <div class="submit-row">
+                <a href="{{ path('app_dashboard') }}" class="btn-cancel">Cancel</a>
+                <button type="submit" class="btn-submit">💳 Continue to Payment →</button>
+            </div>
 
         </form>
 
-        {% endif %}{# end submitted check #}
+    </div>
+</div>
 
-    </div>{# /content #}
-</div>{# /main #}
 
 <script>
-    // Theme toggle
+    // Plan → fixed duration + fixed total price
+    const PLAN_CONFIG = {
+        basic:    { months: 3,  total: 300,  label: '3 months',  color: '#2563eb' },
+        standard: { months: 6,  total: 546,  label: '6 months',  color: '#d97706' },
+        premium:  { months: 12, total: 1020, label: '12 months', color: '#16a34a' },
+    };
+
     const toggle = document.getElementById('themeToggle');
     if (localStorage.getItem('theme') === 'light') { document.body.classList.add('light-mode'); toggle.textContent = '☀️'; }
     toggle.addEventListener('click', () => {
@@ -275,11 +274,51 @@
         localStorage.setItem('theme', isLight ? 'light' : 'dark');
     });
 
-    // File upload label update
-    document.querySelector('input[type="file"]').addEventListener('change', function() {
-        const p = this.closest('.file-upload-area').querySelector('p');
-        p.innerHTML = `<strong style="color:var(--green)">${this.files.length} file(s) selected</strong>`;
-    });
+    function onPlanChange(plan) {
+        // Reset all cards to dim
+        ['dc-3','dc-6','dc-12'].forEach(id => {
+            document.getElementById(id).classList.remove('dc-active');
+            document.getElementById(id).classList.add('dc-dim');
+        });
+
+        if (!plan || !PLAN_CONFIG[plan]) return;
+
+        const cfg = PLAN_CONFIG[plan];
+
+        // Set hidden duration input
+        document.getElementById('duration_hidden').value = cfg.months;
+
+        // Highlight the matching card
+        const activeId = 'dc-' + cfg.months;
+        document.getElementById(activeId).classList.remove('dc-dim');
+        document.getElementById(activeId).classList.add('dc-active');
+
+        // Set hidden premium
+        document.getElementById('premium_hidden').value = (cfg.total / cfg.months).toFixed(2);
+
+        recalculate();
+    }
+
+    function recalculate() {
+        const plan     = document.getElementById('plan_select').value;
+        const startVal = document.getElementById('start_date').value;
+        if (!plan || !startVal || !PLAN_CONFIG[plan]) return;
+
+        const cfg    = PLAN_CONFIG[plan];
+        const months = cfg.months;
+
+        const end = new Date(startVal);
+        end.setMonth(end.getMonth() + months);
+        end.setDate(end.getDate() - 1);
+
+        const fmt   = d => d.toLocaleDateString('fr-MA', { day:'2-digit', month:'2-digit', year:'numeric' });
+        const start = new Date(startVal);
+
+        document.getElementById('cs-start').textContent = fmt(start);
+        document.getElementById('cs-end').textContent   = fmt(end);
+        document.getElementById('cs-total').textContent = cfg.total + ' MAD';
+        document.getElementById('coverage-summary').style.display = 'flex';
+    }
 </script>
 </body>
 </html>

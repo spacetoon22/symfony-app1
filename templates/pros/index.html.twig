@@ -6,8 +6,9 @@
     <title>AssureX – Prospects</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{{ asset('css/pros.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/pros2.css') }}">
     <link rel="icon" type="image/png" href="{{ asset('images/logo.png') }}">
+
 </head>
 <body>
 
@@ -49,7 +50,6 @@
             </div>
         </div>
         <div class="topbar__spacer"></div>
-
         <button class="theme-toggle" id="themeToggle" title="Toggle theme">🌙</button>
     </header>
 
@@ -104,17 +104,15 @@
                 {% if (dossiers|default([])) is empty %}
                     <div class="empty-state">
                         <div class="big">📋</div>
-                        <p>No dossiers yet. They will appear here once a client health form is submitted.</p>
+                        <p>No dossiers yet. They will appear here once a client form is submitted.</p>
                     </div>
                 {% else %}
 
                 {% for dossier in dossiers|default([]) %}
                 <div class="dossier-card {{ dossier.status }}" data-status="{{ dossier.status }}" data-name="{{ dossier.firstName }} {{ dossier.lastName }}">
 
-                    {# Client avatar #}
                     <div class="card-avatar">{{ dossier.firstName|first|upper }}</div>
 
-                    {# Client info #}
                     <div class="card-info">
                         <div class="card-name">{{ dossier.firstName }} {{ dossier.lastName }}</div>
                         <div class="card-meta">
@@ -130,7 +128,6 @@
                             </span>
                             <span>📅 Submitted {{ dossier.createdAt|date('d M Y') }}</span>
                         </div>
-                        {# Rejection note from admin #}
                         {% if dossier.status == 'rejected' and dossier.rejectionNote %}
                         <div style="margin-top:.6rem;">
                             <div class="rejection-note">
@@ -140,7 +137,6 @@
                         {% endif %}
                     </div>
 
-                    {# Documents status #}
                     <div class="docs-status">
                         <span class="status-pill pill-{{ dossier.status }}">
                             {% if dossier.status == 'pending' %}⏳ Pending
@@ -150,27 +146,16 @@
                             {% elseif dossier.status == 'rejected' %}❌ Rejected
                             {% endif %}
                         </span>
-                        <div class="doc-pills">
-                            {% for doc in ['cin','photo','medical','salary','contract'] %}
-                                {% if doc in dossier.documents %}
-                                    <span class="doc-pill doc-ok">{{ doc|upper }}</span>
-                                {% else %}
-                                    <span class="doc-pill doc-missing">{{ doc|upper }} ✗</span>
-                                {% endif %}
-                            {% endfor %}
-                        </div>
+                        
                         {% if dossier.assignedTo %}
-                                <div class="claimed-by">👔 Assigned to <strong>{{ dossier.assignedTo.email }}</strong></div>
+                            <div class="claimed-by">👔 Assigned to <strong>{{ dossier.assignedTo.email }}</strong></div>
                         {% endif %}
                     </div>
 
-                    {# Actions #}
                     <div class="card-actions">
 
-                        {# View details button always visible #}
                         <a href="{{ path('app_pros_show', {id: dossier.id}) }}" class="btn-view">👁 View Details</a>
 
-                        {# Commercial: send to review if assigned to them #}
                         {% if not is_granted('ROLE_ADMIN') %}
                             {% if dossier.status == 'claimed' and dossier.assignedTo == app.user %}
                                 <form method="post" action="{{ path('app_pros_submit_review', {id: dossier.id}) }}">
@@ -178,6 +163,17 @@
                                     <button type="submit" class="btn-claim">📤 Send to Admin Review</button>
                                 </form>
                             {% endif %}
+                        {% endif %}
+
+                        {# ── Delete button — admin only ── #}
+                        {% if is_granted('ROLE_ADMIN') %}
+                            <button
+                                type="button"
+                                class="btn-delete"
+                                onclick="openDeleteModal({{ dossier.id }}, '{{ dossier.firstName }} {{ dossier.lastName }}', '{{ csrf_token('delete_' ~ dossier.id) }}')"
+                            >
+                                🗑 Delete
+                            </button>
                         {% endif %}
 
                     </div>
@@ -189,10 +185,10 @@
             </div>
         </div>
 
-    </div>{# /content #}
-</div>{# /main #}
+    </div>
+</div>
 
-<!-- ── Reject modal (admin only) ── -->
+<!-- ── Reject modal ── -->
 <div class="modal-overlay" id="rejectModal">
     <div class="modal">
         <h3>❌ Reject Dossier</h3>
@@ -208,8 +204,24 @@
     </div>
 </div>
 
+<!-- ── Delete confirm modal ── -->
+<div class="delete-modal-overlay" id="deleteModal">
+    <div class="delete-modal">
+        <div class="dm-icon">🗑️</div>
+        <h3>Delete Dossier?</h3>
+        <p>You are about to permanently delete the dossier for <strong id="deleteClientName"></strong>.<br>This action cannot be undone.</p>
+        <div class="dm-actions">
+            <button type="button" class="btn-dm-cancel" onclick="closeDeleteModal()">Cancel</button>
+            <form method="post" id="deleteForm" action="">
+                <input type="hidden" name="_token" id="deleteToken" value="">
+                <button type="submit" class="btn-dm-confirm">Yes, Delete</button>
+            </form>
+        </div>
+    </div>
+</div>
+
 <script>
-    // Theme toggle
+    // Theme
     const toggle = document.getElementById('themeToggle');
     if (localStorage.getItem('theme') === 'light') { document.body.classList.add('light-mode'); toggle.textContent = '☀️'; }
     toggle.addEventListener('click', () => {
@@ -219,7 +231,7 @@
         localStorage.setItem('theme', isLight ? 'light' : 'dark');
     });
 
-    // Status filter
+    // Filter
     function filterStatus(status, btn) {
         document.querySelectorAll('.ftab').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
@@ -227,8 +239,6 @@
             card.style.display = (status === 'all' || card.dataset.status === status) ? '' : 'none';
         });
     }
-
-
 
     // Reject modal
     function openRejectModal(id) {
@@ -242,7 +252,20 @@
     document.getElementById('rejectModal').addEventListener('click', function(e) {
         if (e.target === this) closeRejectModal();
     });
-</script>
 
+    // Delete modal
+    function openDeleteModal(id, name, token) {
+        document.getElementById('deleteClientName').textContent = name;
+        document.getElementById('deleteForm').action = '/pros/' + id + '/delete';
+        document.getElementById('deleteToken').value = token;
+        document.getElementById('deleteModal').classList.add('open');
+    }
+    function closeDeleteModal() {
+        document.getElementById('deleteModal').classList.remove('open');
+    }
+    document.getElementById('deleteModal').addEventListener('click', function(e) {
+        if (e.target === this) closeDeleteModal();
+    });
+</script>
 </body>
 </html>

@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AssureX – Clients</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/png" href="{{ asset('images/logo.png') }}">
+    <link rel="stylesheet" href="{{ asset('css/client.css') }}">
+</head>
+<body>
+
+{# ── Sidebar ── #}
+<aside class="sidebar">
+    <div class="sidebar__brand">
+        <div class="brand-icon">🛡️</div>
+        <div class="brand-text"><h1>Assure<span>X</span></h1><p>Assurance Platform</p></div>
+    </div>
+    <nav class="sidebar__nav">
+        <div class="nav-section-label">Overview</div>
+        <a href="{{ path('app_dashboard') }}" class="nav-item"><span class="icon">📊</span> Dashboard</a>
+        <div class="nav-section-label">Clients</div>
+        <a href="{{ path('app_pros') }}" class="nav-item"><span class="icon">📋</span> Prospects</a>
+        <a href="{{ path('app_client') }}" class="nav-item active"><span class="icon">👥</span> Clients</a>
+    </nav>
+    <div class="sidebar__footer">
+        <div class="user-chip">
+            <div class="avatar">{% if app.user %}{{ (app.user.userIdentifier ?? 'A')|first|upper }}{% else %}A{% endif %}</div>
+            <div class="user-info">
+                <p>{{ app.user ? app.user.userIdentifier : 'Commercial' }}</p>
+                <span>{% if is_granted('ROLE_ADMIN') %}Administrator{% else %}Commercial{% endif %}</span>
+            </div>
+            <a href="{{ logout_path() }}" class="logout-icon" title="Logout">↩</a>
+        </div>
+    </div>
+</aside>
+
+{# ── Main ── #}
+<div class="main">
+    <header class="topbar">
+        <div>
+            <div class="topbar__title">Clients</div>
+            <div class="topbar__sub">Search and view full client details</div>
+        </div>
+        <div class="topbar__spacer"></div>
+        <button class="theme-toggle" id="themeToggle" title="Toggle theme">🌙</button>
+    </header>
+
+    <div class="content">
+        {% for msg in app.flashes('success') %}<div class="flash flash-success">✅ {{ msg }}</div>{% endfor %}
+        {% for msg in app.flashes('error') %}<div class="flash flash-error">⚠️ {{ msg }}</div>{% endfor %}
+
+        {# ── Search ── #}
+        <div class="panel">
+            <div class="panel__head">
+                <div>
+                    <h3>Find a Client</h3>
+                    <div class="sub">Clients with multiple insurances are grouped automatically</div>
+                </div>
+            </div>
+            <div class="search-body">
+                <form method="GET" action="{{ path('app_client') }}">
+                    <div class="search-row">
+                        <div class="search-input-wrap">
+                            <span class="search-icon">🔍</span>
+                            <input type="text" name="search" class="search-input"
+                                   value="{{ search }}"
+                                   placeholder="Name, phone number, or email address…"
+                                   autocomplete="off" autofocus>
+                        </div>
+                        <button type="submit" class="btn-search">Search</button>
+                        {% if search %}<a href="{{ path('app_client') }}" class="btn-reset">✕ Clear</a>{% endif %}                    </div>
+                </form>
+            </div>
+        </div>
+
+        {# ── Results ── #}
+        {% if search %}
+            <div class="results-bar">
+                {% if total > 0 %}
+                    <strong>{{ total }}</strong> client{{ total > 1 ? 's' : '' }} found for "<strong>{{ search }}</strong>" — click a card to expand
+                {% else %}
+                    No results for "<strong>{{ search }}</strong>"
+                {% endif %}
+            </div>
+
+            {% if grouped|length == 0 %}
+                <div class="state-box">
+                    <div class="big">🔍</div>
+                    <p>No client found matching "<strong>{{ search }}</strong>".</p>
+                    <p class="hint">Try a different spelling or use a phone number.</p>
+                </div>
+            {% else %}
+                <div class="client-list">
+                {% set cardIndex = 0 %}
+                {% for email, client in grouped %}
+                {% set cardId = 'card-' ~ cardIndex %}
+                {% set cardIndex = cardIndex + 1 %}
+
+                <div class="client-card" id="{{ cardId }}">
+
+                    {# ── Collapsed row ── #}
+                    <div class="card-row" onclick="toggleCard('{{ cardId }}')">
+                        <div class="card-avatar">
+                            {{ client.firstNames[0]|default('?')|first|upper }}{{ client.lastNames[0]|default('?')|first|upper }}
+                        </div>
+                        <div class="card-identity">
+                            <div class="card-name">
+                                {{ client.firstNames|join(' / ') }} {{ client.lastNames|join(' / ') }}
+                            </div>
+                            <div class="card-sub">
+                                <span>📧 {{ client.email }}</span>
+                                {% if client.phones|length > 0 %}
+                                    <span>📞 {{ client.phones|join(' · ') }}</span>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        {# Insurance type badges #}
+                        <div class="ins-badges">
+                            {% for d in client.dossiers %}
+                                <span class="ins-badge">
+                                    {% if d.type == 'taxi' %}🚖 Taxi
+                                    {% elseif d.type == 'home' %}🏠 Home
+                                    {% elseif d.type == 'auto' %}🚗 Auto
+                                    {% elseif d.type == 'health' %}❤️ Health
+                                    {% else %}📋 {{ d.type|default('?')|capitalize }}
+                                    {% endif %}
+                                </span>
+                            {% endfor %}
+                        </div>
+
+                        <span class="chevron">▼</span>
+                    </div>
+
+                    {# ── Expanded detail ── #}
+                    <div class="card-detail">
+                        <div class="detail-inner">
+
+                            {# Personal Information #}
+                            <div class="detail-section">
+                                <div class="section-title">👤 Personal Information</div>
+                                <div class="field-grid">
+
+                                    <div class="field">
+                                        <div class="field-label">Full Name</div>
+                                        {% set names = [] %}
+                                        {% for fn in client.firstNames %}
+                                            {% for ln in client.lastNames %}
+                                                {% set names = names|merge([fn ~ ' ' ~ ln]) %}
+                                            {% endfor %}
+                                        {% endfor %}
+                                        <div class="multi-value {% if names|length > 1 %}differs{% endif %}">
+                                            {% for n in names %}<span class="val-tag">{{ n }}</span>{% endfor %}
+                                        </div>
+                                    </div>
+
+                                    <div class="field">
+                                        <div class="field-label">CIN</div>
+                                        {% if client.cins|length == 0 %}
+                                            <div class="field-value empty">—</div>
+                                        {% else %}
+                                            <div class="multi-value {% if client.cins|length > 1 %}differs{% endif %}">
+                                                {% for v in client.cins %}<span class="val-tag">{{ v }}</span>{% endfor %}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+
+                                    <div class="field">
+                                        <div class="field-label">Gender</div>
+                                        {% if client.genders|length == 0 %}
+                                            <div class="field-value empty">—</div>
+                                        {% else %}
+                                            <div class="multi-value {% if client.genders|length > 1 %}differs{% endif %}">
+                                                {% for v in client.genders %}
+                                                    <span class="val-tag">
+                                                        {% if v == 'male' %}♂ Male{% elseif v == 'female' %}♀ Female{% else %}{{ v }}{% endif %}
+                                                    </span>
+                                                {% endfor %}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+
+                                    <div class="field">
+                                        <div class="field-label">Date of Birth</div>
+                                        {% if client.dobs|length == 0 %}
+                                            <div class="field-value empty">—</div>
+                                        {% else %}
+                                            <div class="multi-value {% if client.dobs|length > 1 %}differs{% endif %}">
+                                                {% for v in client.dobs %}<span class="val-tag">{{ v|date('d M Y') }}</span>{% endfor %}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+
+                                    <div class="field">
+                                        <div class="field-label">City</div>
+                                        {% if client.cities|length == 0 %}
+                                            <div class="field-value empty">—</div>
+                                        {% else %}
+                                            <div class="multi-value {% if client.cities|length > 1 %}differs{% endif %}">
+                                                {% for v in client.cities %}<span class="val-tag">{{ v }}</span>{% endfor %}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+
+                                    <div class="field">
+                                        <div class="field-label">Address</div>
+                                        {% if client.addresses|length == 0 %}
+                                            <div class="field-value empty">—</div>
+                                        {% else %}
+                                            <div class="multi-value {% if client.addresses|length > 1 %}differs{% endif %}">
+                                                {% for v in client.addresses %}<span class="val-tag">{{ v }}</span>{% endfor %}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+
+                                </div>
+                            </div>
+
+                            {# Contact Details #}
+                            <div class="detail-section">
+                                <div class="section-title">📞 Contact Details</div>
+                                <div class="field-grid">
+                                    <div class="field">
+                                        <div class="field-label">Email</div>
+                                        <div class="field-value">{{ client.email }}</div>
+                                    </div>
+                                    <div class="field">
+                                        <div class="field-label">Phone</div>
+                                        {% if client.phones|length == 0 %}
+                                            <div class="field-value empty">—</div>
+                                        {% else %}
+                                            <div class="multi-value {% if client.phones|length > 1 %}differs{% endif %}">
+                                                {% for v in client.phones %}<span class="val-tag">📞 {{ v }}</span>{% endfor %}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+
+                            {# Insurance contracts — one block per dossier #}
+                            <div class="detail-section">
+                                <div class="section-title">
+                                    🛡️ Insurance Contracts
+                                    <span style="font-size:.7rem; color:var(--slate); font-weight:400; text-transform:none; letter-spacing:0;">
+                                        ({{ client.dossiers|length }} contract{{ client.dossiers|length > 1 ? 's' : '' }})
+                                    </span>
+                                </div>
+                                <div class="insurance-list">
+                                {% for d in client.dossiers %}
+                                <div class="ins-contract">
+                                    <div class="ins-contract-head">
+                                        <span class="ins-type-icon">
+                                            {% if d.type == 'taxi' %}🚖{% elseif d.type == 'home' %}🏠{% elseif d.type == 'auto' %}🚗{% else %}❤️{% endif %}
+                                        </span>
+                                        <div>
+                                            <div class="ins-type-name">
+                                                {% if d.type == 'taxi' %}Taxi{% elseif d.type == 'home' %}Home{% elseif d.type == 'auto' %}Auto{% elseif d.type == 'health' %}Health{% else %}{{ d.type|default('Unknown')|capitalize }}{% endif %}
+                                                Insurance
+                                            </div>
+                                            <div class="ins-plan">{{ d.plan ? d.plan|capitalize ~ ' plan' : 'No plan specified' }}</div>
+                                        </div>
+                                        <span class="status-pill pill-{{ d.status }}">
+                                            {% if d.status == 'pending'  %}⏳ Pending
+                                            {% elseif d.status == 'claimed'  %}🤝 Claimed
+                                            {% elseif d.status == 'review'   %}🔎 Review
+                                            {% elseif d.status == 'approved' %}✅ Approved
+                                            {% elseif d.status == 'rejected' %}❌ Rejected
+                                            {% endif %}
+                                        </span>
+                                    </div>
+                                    <div class="ins-contract-body">
+                                        <div class="ins-field">
+                                            <div class="ins-field-label">Start Date</div>
+                                            <div class="ins-field-value {% if not d.startDate %}empty{% endif %}">{{ d.startDate ? d.startDate|date('d M Y') : '—' }}</div>
+                                        </div>
+                                        <div class="ins-field">
+                                            <div class="ins-field-label">End Date</div>
+                                            <div class="ins-field-value {% if not d.endDate %}empty{% endif %}">{{ d.endDate ? d.endDate|date('d M Y') : '—' }}</div>
+                                        </div>
+                                        <div class="ins-field">
+                                            <div class="ins-field-label">Duration</div>
+                                            <div class="ins-field-value {% if not d.durationMonths %}empty{% endif %}">{{ d.durationMonths ? d.durationMonths ~ ' months' : '—' }}</div>
+                                        </div>
+                                        <div class="ins-field">
+                                            <div class="ins-field-label">Premium</div>
+                                            <div class="ins-field-value {% if not d.premium %}empty{% endif %}">{{ d.premium ? d.premium|number_format(2) ~ ' MAD' : '—' }}</div>
+                                        </div>
+                                        <div class="ins-field">
+                                            <div class="ins-field-label">Payment</div>
+                                            <div class="ins-field-value {% if not d.paymentMethod %}empty{% endif %}">{{ d.paymentMethod ? d.paymentMethod|capitalize : '—' }}</div>
+                                        </div>
+                                        <div class="ins-field">
+                                            <div class="ins-field-label">Beneficiaries</div>
+                                            <div class="ins-field-value {% if not d.beneficiaries %}empty{% endif %}">{{ d.beneficiaries ?? '—' }}</div>
+                                        </div>
+                                        <div class="ins-field">
+                                            <div class="ins-field-label">Conditions</div>
+                                            <div class="ins-field-value {% if not d.conditions %}empty{% endif %}">{{ d.conditions ?? '—' }}</div>
+                                        </div>
+                                        <div class="ins-field">
+                                            <div class="ins-field-label">Submitted</div>
+                                            <div class="ins-field-value">{{ d.createdAt|date('d M Y') }}</div>
+                                        </div>
+                                    </div>
+
+                                    {# Documents for this contract #}
+                                    {% if d.documents|length > 0 %}
+                                    <div style="padding: .5rem 1rem .75rem; border-top: 1px solid rgba(255,255,255,.04);">
+                                        <div class="ins-field-label" style="margin-bottom:.4rem;">Documents</div>
+                                        <div class="doc-pills">
+                                            {% for doc in ['cin','photo','medical','salary','contract'] %}
+                                                {% if doc in d.documents %}
+                                                    <span class="doc-pill doc-ok">✓ {{ doc|upper }}</span>
+                                                {% else %}
+                                                    <span class="doc-pill doc-missing">✗ {{ doc|upper }}</span>
+                                                {% endif %}
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                    {% endif %}
+
+                                    {# Notes / rejection for this contract #}
+                                    {% if d.commercialNotes or d.medicalNotes or d.rejectionNote %}
+                                    <div style="padding: .5rem 1rem .85rem; border-top: 1px solid rgba(255,255,255,.04); display:flex; flex-direction:column; gap:.5rem;">
+                                        {% if d.commercialNotes %}
+                                            <div class="note-label">Commercial notes</div>
+                                            <div class="note-box">{{ d.commercialNotes }}</div>
+                                        {% endif %}
+                                        {% if d.medicalNotes %}
+                                            <div class="note-label">Medical notes</div>
+                                            <div class="note-box">{{ d.medicalNotes }}</div>
+                                        {% endif %}
+                                        {% if d.rejectionNote %}
+                                            <div class="note-label">❌ Rejection reason</div>
+                                            <div class="note-box rejection">{{ d.rejectionNote }}</div>
+                                        {% endif %}
+                                    </div>
+                                    {% endif %}
+
+                                </div>
+                                {% endfor %}
+                                </div>
+                            </div>
+
+                        </div>{# end detail-inner #}
+                    </div>{# end card-detail #}
+                </div>{# end client-card #}
+                {% endfor %}
+                </div>
+            {% endif %}
+
+        {% else %}
+            <div class="state-box">
+                <div class="big">👥</div>
+                <p>Type a client's name, phone number, or email address to find them.</p>
+                <p class="hint">Clients with multiple insurances are grouped automatically under one card.</p>
+            </div>
+        {% endif %}
+
+    </div>
+</div>
+
+<script>
+    function toggleCard(id) {
+        const card = document.getElementById(id);
+        card.classList.toggle('open');
+    }
+
+    const toggle = document.getElementById('themeToggle');
+    if (localStorage.getItem('theme') === 'light') {
+        document.body.classList.add('light-mode');
+        toggle.textContent = '☀️';
+    }
+    toggle.addEventListener('click', () => {
+        document.body.classList.toggle('light-mode');
+        const isLight = document.body.classList.contains('light-mode');
+        toggle.textContent = isLight ? '☀️' : '🌙';
+        localStorage.setItem('theme', isLight ? 'light' : 'dark');
+    });
+
+    // Auto-open if only one client found
+    document.addEventListener('DOMContentLoaded', () => {
+        const cards = document.querySelectorAll('.client-card');
+        if (cards.length === 1) cards[0].classList.add('open');
+    });
+</script>
+</body>
+</html>

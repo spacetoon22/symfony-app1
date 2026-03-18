@@ -4,173 +4,477 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AssureX – Dashboard</title>
-    <link rel="stylesheet" href="{{ asset('css/dash.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/dash2.css') }}">
     <link rel="icon" type="image/png" href="{{ asset('images/logo.png') }}">
-
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
-    
-</head>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+    <style>
+        /* ── Commercial name clickable ── */
+        .ct-name-link {
+            cursor: pointer;
+            color: var(--gold, #c9a84c);
+            text-decoration: none;
+            transition: opacity .15s;
+            font-weight: 500;
+        }
+        .ct-name-link:hover { opacity: .75; text-decoration: underline; }
 
+        /* ══════════════════════════════════
+           CLIENT MODAL
+        ══════════════════════════════════ */
+        .cm-overlay {
+            display: none;
+            position: fixed; inset: 0; z-index: 1000;
+            background: rgba(0,0,0,.65);
+            backdrop-filter: blur(3px);
+            align-items: flex-start; justify-content: center;
+            padding: 1.5rem;
+            overflow-y: auto;
+        }
+        .cm-overlay.open { display: flex; }
+
+        .cm-modal {
+            background: #0f2035;
+            border: 1px solid rgba(201,168,76,.25);
+            border-radius: 16px;
+            width: 100%; max-width: 720px;
+            min-height: 60vh;
+            max-height: none;
+            display: flex; flex-direction: column;
+            animation: cmIn .22s ease;
+            overflow: hidden;
+            margin: auto;
+        }
+        @keyframes cmIn { from { opacity:0; transform:translateY(16px) scale(.98); } to { opacity:1; transform:translateY(0) scale(1); } }
+
+        body.light-mode .cm-modal { background: #ffffff; border-color: rgba(201,168,76,.3); }
+
+        /* Modal header */
+        .cm-head {
+            display: flex; align-items: center; gap: .85rem;
+            padding: 1.1rem 1.4rem;
+            border-bottom: 1px solid rgba(201,168,76,.12);
+            flex-shrink: 0;
+        }
+        .cm-head-avatar {
+            width: 38px; height: 38px; border-radius: 50%;
+            background: linear-gradient(135deg, #c9a84c, #7a5c1e);
+            color: #0d1b2a; font-weight: 700; font-size: .9rem;
+            display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+        }
+        .cm-head-title { font-family: 'Playfair Display', serif; font-size: 1rem; color: #f0f4ff; line-height: 1.2; }
+        body.light-mode .cm-head-title { color: #1a202c; }
+        .cm-head-sub { font-size: .75rem; color: #8892b0; margin-top: .1rem; }
+        .cm-close {
+            margin-left: auto; width: 32px; height: 32px; border-radius: 8px;
+            background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.08);
+            color: #8892b0; font-size: 1rem; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            transition: background .15s, color .15s; flex-shrink: 0;
+        }
+        .cm-close:hover { background: rgba(248,113,113,.15); color: #f87171; border-color: rgba(248,113,113,.2); }
+
+        /* Modal body — scrollable */
+        .cm-body { padding:1.1rem 1.4rem; flex:1; display:flex; flex-direction:column; gap:.65rem; }
+
+        /* Loading / empty */
+        .cm-loading, .cm-empty {
+            text-align: center; padding: 2.5rem 1rem; color: #8892b0; font-size: .88rem;
+        }
+        .cm-loading .spin {
+            display: inline-block; width: 28px; height: 28px; border: 2px solid rgba(201,168,76,.2);
+            border-top-color: #c9a84c; border-radius: 50%; animation: spin .7s linear infinite; margin-bottom: .75rem;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Client row */
+        .cm-client {
+            background: rgba(255,255,255,.03);
+            border: 1px solid rgba(201,168,76,.1);
+            border-radius: 10px; overflow: hidden;
+        }
+        body.light-mode .cm-client { background: #f7f8fc; border-color: #e2e8f0; }
+
+        .cm-client-head {
+            display: flex; align-items: center; gap: .85rem; flex-wrap: wrap;
+            padding: .75rem 1rem;
+            cursor: pointer; user-select: none;
+            transition: background .15s;
+        }
+        .cm-client-head:hover { background: rgba(201,168,76,.05); }
+        .cm-client.open .cm-client-head { background: rgba(201,168,76,.07); border-bottom: 1px solid rgba(201,168,76,.1); }
+
+        .cm-avatar {
+            width: 36px; height: 36px; border-radius: 50%;
+            background: linear-gradient(135deg, #c9a84c, #7a5c1e);
+            color: #0d1b2a; font-weight: 700; font-size: .8rem;
+            display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+        }
+        .cm-client-name { font-size: .88rem; font-weight: 600; color: #f0f4ff; flex: 1; }
+        body.light-mode .cm-client-name { color: #1a202c; }
+        .cm-client-contact { font-size: .74rem; color: #8892b0; margin-top: .1rem; }
+
+        /* Insurance type badges */
+        .cm-ins-badges { display: flex; gap: .35rem; flex-wrap: wrap; }
+        .cm-ins-badge {
+            font-size: .68rem; font-weight: 600; padding: .15rem .5rem;
+            border-radius: 20px; background: rgba(201,168,76,.12);
+            color: #c9a84c; border: 1px solid rgba(201,168,76,.2); white-space: nowrap;
+        }
+
+        .cm-chevron { color: #c9a84c; font-size: .78rem; margin-left: auto; flex-shrink: 0; transition: transform .2s; }
+        .cm-client.open .cm-chevron { transform: rotate(180deg); }
+
+        /* Contracts expanded */
+        .cm-contracts { display: none; padding: .65rem 1rem .85rem; flex-direction: column; gap: .5rem; }
+        .cm-client.open .cm-contracts { display: flex; }
+
+        .cm-contract {
+            background: rgba(255,255,255,.03);
+            border: 1px solid rgba(255,255,255,.06);
+            border-radius: 8px; padding: .65rem .85rem;
+            display: flex; flex-wrap: wrap; gap: .5rem .85rem; align-items: center;
+        }
+        body.light-mode .cm-contract { background: #ffffff; border-color: #e2e8f0; }
+
+        .cm-contract-type { font-size: .85rem; font-weight: 600; color: #f0f4ff; display: flex; align-items: center; gap: .3rem; }
+        body.light-mode .cm-contract-type { color: #1a202c; }
+        .cm-contract-plan { font-size: .75rem; color: #8892b0; }
+        .cm-contract-detail { font-size: .75rem; color: #8892b0; }
+        .cm-contract-detail strong { color: #ccd6f6; font-weight: 500; }
+        body.light-mode .cm-contract-detail strong { color: #2d3748; }
+
+        /* Status pill */
+        .cm-pill { display: inline-block; padding: .18rem .55rem; border-radius: 20px; font-size: .69rem; font-weight: 600; margin-left: auto; white-space: nowrap; }
+        .cm-pill-pending  { background: rgba(251,191,36,.12);  color: #fbbf24; }
+        .cm-pill-claimed  { background: rgba(201,168,76,.15);  color: #c9a84c; }
+        .cm-pill-review   { background: rgba(201,168,76,.15);  color: #c9a84c; }
+        .cm-pill-approved { background: rgba(45,212,191,.12);  color: #2dd4bf; }
+        .cm-pill-rejected { background: rgba(248,113,113,.12); color: #f87171; }
+
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(201,168,76,.2); border-radius: 10px; }
+    </style>
+</head>
 <body>
 
-    <!-- ═══════════════════════════════
-         SIDEBAR
-    ═══════════════════════════════ -->
-    <aside class="sidebar">
-        <div class="sidebar__brand">
-            <div class="brand-icon">🛡️</div>
-            <div class="brand-text">
-                <h1>Assure<span>X</span></h1>
-                <p>Assurance Platform</p>
-            </div>
+<!-- ═══ SIDEBAR ═══ -->
+<aside class="sidebar">
+    <div class="sidebar__brand">
+        <div class="brand-icon">🛡️</div>
+        <div class="brand-text">
+            <h1>Assure<span>X</span></h1>
+            <p>Assurance Platform</p>
         </div>
-
-        <nav class="sidebar__nav">
-            <div class="nav-section-label">Overview</div>
-            <a href="#" class="nav-item active">
-                <span class="icon">📊</span> Dashboard
-            </a>
-
-
-
-            <a href="{{ path('app_pros') }}" class="nav-item">
-                <span class="icon">📋</span> Prospects
-                <span class="badge red">0</span>
-            </a>
-
-
-
-
-            <div class="nav-section-label">Management</div>
-            {# ✅ Fixed #}
-            <a href="{{ path('app_users') }}" class="nav-item">
-                <span class="icon">👤</span> Users
-
-            <a href="{{ path('app_settings') }}" class="nav-item">
-                <span class="icon">⚙️</span> Settings
-            </a>
-        </nav>
-
-        <div class="sidebar__footer">
-            <div class="user-chip">
-                <div class="avatar">{{ (app.user.userIdentifier ?? 'A')|first|upper }}</div>
-
-                <div class="user-info">
-                    <p>{{ app.user.userIdentifier ?? 'Admin' }}</p>
-                    <span>Administrator</span>
-                </div>
-                <a href="{{ logout_path() }}" class="logout-icon" title="Logout">↩</a>
+    </div>
+    <nav class="sidebar__nav">
+        <div class="nav-section-label">Overview</div>
+        <a href="#" class="nav-item active"><span class="icon">📊</span> Dashboard</a>
+        <a href="{{ path('app_pros') }}" class="nav-item"><span class="icon">📋</span> Prospects<span class="badge red">0</span></a>
+        <div class="nav-section-label">Management</div>
+        <a href="{{ path('app_client') }}" class="nav-item"><span class="icon">👥</span> Client</a>
+        <a href="{{ path('app_users') }}" class="nav-item"><span class="icon">👤</span> Users</a>
+        <a href="{{ path('app_settings') }}" class="nav-item"><span class="icon">⚙️</span> Settings</a>
+    </nav>
+    <div class="sidebar__footer">
+        <div class="user-chip">
+            <div class="avatar">{{ (app.user.userIdentifier ?? 'A')|first|upper }}</div>
+            <div class="user-info">
+                <p>{{ app.user.userIdentifier ?? 'Admin' }}</p>
+                <span>Administrator</span>
             </div>
+            <a href="{{ logout_path() }}" class="logout-icon" title="Logout">↩</a>
         </div>
-    </aside>
+    </div>
+</aside>
 
-    <!-- ═══════════════════════════════
-         MAIN
-    ═══════════════════════════════ -->
-    <div class="main">
+<!-- ═══ MAIN ═══ -->
+<div class="main">
+    <header class="topbar">
+        <div>
+            <div class="topbar__title">Dashboard</div>
+            <div class="topbar__sub" id="currentDate"></div>
+        </div>
+        <div class="topbar__spacer"></div>
+        <button class="theme-toggle" id="themeToggle" title="Toggle theme">🌙</button>
+    </header>
 
-        <!-- Topbar -->
-        <header class="topbar">
+    <!-- ── Revenue Chart Panel ── -->
+    <div class="chart-panel">
+        <div class="chart-head">
             <div>
-                <div class="topbar__title">Dashboard</div>
-                <div class="topbar__sub" id="currentDate"></div>
+                <h3>💰 Premium Revenue</h3>
+                <div class="sub">Approved dossiers · {{ selectedMonthName }} {{ selectedYear }}</div>
             </div>
-            <div class="topbar__spacer"></div>            
-            <button class="theme-toggle" id="themeToggle" title="Toggle theme">🌙</button>
-
-        </header>
-        <div class="panel" style="animation-delay:.2s">
-            <div class="panel__head">
-                <div>
-                    <h3>💰 Premium Revenue</h3>
-                    <div class="sub">Approved dossiers only</div>
+            <div style="display:flex; align-items:center; gap:1rem; flex-wrap:wrap;">
+                <div class="month-select-wrap">
+                    <label for="monthPicker">📅 Month:</label>
+                    <select class="month-select" id="monthPicker" onchange="changeMonth(this.value)">
+                        {% for key, m in availableMonths %}
+                            <option value="{{ m.month }}-{{ m.year }}"
+                                {% if m.month == selectedMonth and m.year == selectedYear %}selected{% endif %}>
+                                {{ m.label }}
+                            </option>
+                        {% endfor %}
+                    </select>
                 </div>
-                <span class="kpi-trend trend-up" style="font-size:.78rem;padding:.3rem .7rem;border-radius:20px;">
-                    {{ totalPremium|number_format(0, '.', ',') }} MAD
-                </span>
+                <span class="total-badge">{{ totalPremium|number_format(0, '.', ',') }} MAD</span>
             </div>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Commercial</th>
-                        <th style="text-align:right">Revenue</th>
-                        <th style="text-align:right">Share</th>
-                    </tr>
-                </thead>
-                <tbody>
+        </div>
+
+        <div class="chart-body">
+            {% if premiumByCommercial is not empty %}
+                <div class="chart-canvas-wrap">
+                    <canvas id="revenueChart"></canvas>
+                </div>
+
+                <div class="commercial-table">
                     {% for name, amount in premiumByCommercial %}
-                    <tr>
-                        <td>
-                            <div class="client-name">{{ name }}</div>
-                        </td>
-                        <td style="text-align:right; color:var(--gold); font-weight:600;">
-                            {{ amount|number_format(0, '.', ',') }} MAD
-                        </td>
-                        <td style="text-align:right;">
-                            <div style="display:flex;align-items:center;justify-content:flex-end;gap:.5rem;">
-                                <div style="width:80px;height:5px;border-radius:3px;background:rgba(255,255,255,.08);">
-                                    <div style="width:{{ totalPremium > 0 ? ((amount / totalPremium) * 100)|round : 0 }}%;height:100%;border-radius:3px;background:var(--gold);"></div>
-                                </div>
-                                <span style="font-size:.75rem;color:var(--slate);min-width:35px;">
-                                    {{ totalPremium > 0 ? ((amount / totalPremium) * 100)|round : 0 }}%
+                    {# Look up the user id for this commercial name #}
+                    {% set commercialUser = null %}
+                    {% for u in allUsers|default([]) %}
+                        {% if u.userIdentifier == name %}{% set commercialUser = u %}{% endif %}
+                    {% endfor %}
+
+                    <div class="ct-row">
+                        {# Clickable name if we found the user #}
+                        {% if commercialUser %}
+                            <div class="ct-name">
+                                <span class="ct-name-link"
+                                      onclick="openClientModal({{ commercialUser.id }}, '{{ name|e('js') }}')">
+                                    👤 {{ name }}
                                 </span>
                             </div>
-                        </td>
-                    </tr>
-                    {% else %}
-                    <tr>
-                        <td colspan="3" style="text-align:center;color:var(--slate);padding:1.5rem;">
-                            No approved dossiers yet
-                        </td>
-                    </tr>
+                        {% else %}
+                            <div class="ct-name" title="{{ name }}">{{ name }}</div>
+                        {% endif %}
+
+                        <div class="ct-bar-wrap">
+                            <div class="ct-bar" style="width:{{ totalPremium > 0 ? ((amount / totalPremium) * 100)|round : 0 }}%"></div>
+                        </div>
+                        <div class="ct-amount">{{ amount|number_format(0, '.', ',') }} MAD</div>
+                        <div class="ct-pct">{{ totalPremium > 0 ? ((amount / totalPremium) * 100)|round : 0 }}%</div>
+                    </div>
                     {% endfor %}
-                </tbody>
-            </table>
-            <!-- Total row -->
-            <div style="padding:.9rem 1.4rem;border-top:1px solid rgba(201,168,76,.15);display:flex;justify-content:space-between;align-items:center;">
-                <span style="font-size:.78rem;text-transform:uppercase;letter-spacing:.06em;color:var(--slate);">Total</span>
-                <span style="font-family:'Playfair Display',serif;font-size:1.2rem;color:var(--white);">
-                    {{ totalPremium|number_format(0, '.', ',') }} MAD
-                </span>
+
+                    <div class="ct-row" style="border-top:1px solid rgba(201,168,76,.2); margin-top:.5rem; padding-top:.75rem;">
+                        <div class="ct-name" style="font-weight:700; text-transform:uppercase; font-size:.75rem; letter-spacing:.05em; color:var(--slate);">Total</div>
+                        <div class="ct-bar-wrap"></div>
+                        <div class="ct-amount" style="font-family:'Playfair Display',serif; font-size:1.05rem;">{{ totalPremium|number_format(0, '.', ',') }} MAD</div>
+                        <div class="ct-pct">100%</div>
+                    </div>
+                </div>
+
+            {% else %}
+                <div class="chart-empty">
+                    <div class="ei">📭</div>
+                    <p>No approved dossiers for {{ selectedMonthName }} {{ selectedYear }}</p>
+                </div>
+            {% endif %}
+        </div>
+
+        <div class="year-chart-wrap">
+            <div class="year-chart-title">📈 {{ selectedYear }} — Monthly Revenue Overview</div>
+            <div class="year-canvas-wrap">
+                <canvas id="yearChart"></canvas>
             </div>
         </div>
     </div>
-    <!-- /main -->
-    <script>
-        const toggle = document.getElementById('themeToggle');
-        // Remember preference across pages
-        if (localStorage.getItem('theme') === 'light') {
-            document.body.classList.add('light-mode');
-            toggle.textContent = '☀️';
-        }
-        toggle.addEventListener('click', () => {
-            document.body.classList.toggle('light-mode');
-            const isLight = document.body.classList.contains('light-mode');
-            toggle.textContent = isLight ? '☀️' : '🌙';
-            localStorage.setItem('theme', isLight ? 'light' : 'dark');
+</div>
+
+<!-- ══════════════════════════════════
+     CLIENT MODAL
+══════════════════════════════════ -->
+<div class="cm-overlay" id="cmOverlay" onclick="handleOverlayClick(event)">
+    <div class="cm-modal">
+        <div class="cm-head">
+            <div class="cm-head-avatar" id="cmAvatar">?</div>
+            <div>
+                <div class="cm-head-title" id="cmTitle">Loading…</div>
+                <div class="cm-head-sub" id="cmSub"></div>
+            </div>
+            <button class="cm-close" onclick="closeClientModal()">✕</button>
+        </div>
+        <div class="cm-body" id="cmBody">
+            <div class="cm-loading">
+                <div class="spin"></div>
+                <div>Loading clients…</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// ── Theme ──
+const toggle = document.getElementById('themeToggle');
+if (localStorage.getItem('theme') === 'light') { document.body.classList.add('light-mode'); toggle.textContent = '☀️'; }
+toggle.addEventListener('click', () => {
+    document.body.classList.toggle('light-mode');
+    const isLight = document.body.classList.contains('light-mode');
+    toggle.textContent = isLight ? '☀️' : '🌙';
+    localStorage.setItem('theme', isLight ? 'light' : 'dark');
+});
+
+// ── Date ──
+function updateDateTime() {
+    document.getElementById('currentDate').textContent =
+        new Date().toLocaleDateString('en-US', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+}
+updateDateTime();
+
+// ── Month change ──
+function changeMonth(val) {
+    const [month, year] = val.split('-');
+    window.location.href = '{{ path('app_dashboard') }}?month=' + month + '&year=' + year;
+}
+
+// ════════════════════════════════════
+//  CLIENT MODAL LOGIC
+// ════════════════════════════════════
+const typeIcon  = { taxi:'🚖', home:'🏠', auto:'🚗', health:'❤️' };
+const typeLabel = { taxi:'Taxi', home:'Home', auto:'Auto', health:'Health' };
+
+function statusPill(s) {
+    const map = {
+        pending:  ['cm-pill-pending',  '⏳ Pending'],
+        claimed:  ['cm-pill-claimed',  '🤝 Claimed'],
+        review:   ['cm-pill-review',   '🔎 Review'],
+        approved: ['cm-pill-approved', '✅ Approved'],
+        rejected: ['cm-pill-rejected', '❌ Rejected'],
+    };
+    const [cls, label] = map[s] || ['cm-pill-pending', s];
+    return `<span class="cm-pill ${cls}">${label}</span>`;
+}
+
+function openClientModal(userId, name) {
+    // Reset & show
+    document.getElementById('cmOverlay').classList.add('open');
+    document.getElementById('cmAvatar').textContent = name.charAt(0).toUpperCase();
+    document.getElementById('cmTitle').textContent  = name;
+    document.getElementById('cmSub').textContent    = 'Loading clients…';
+    document.getElementById('cmBody').innerHTML     =
+        '<div class="cm-loading"><div class="spin"></div><div>Loading clients…</div></div>';
+
+    fetch(`/clients/by-commercial/${userId}`)
+        .then(r => r.json())
+        .then(data => {
+            document.getElementById('cmSub').textContent =
+                data.total + ' client' + (data.total !== 1 ? 's' : '');
+
+            if (!data.clients || data.clients.length === 0) {
+                document.getElementById('cmBody').innerHTML =
+                    '<div class="cm-empty">📭 No clients assigned to this commercial yet.</div>';
+                return;
+            }
+
+            let html = '';
+            data.clients.forEach((client, idx) => {
+                const initials = client.name.split(' ').map(p => p[0]?.toUpperCase() || '').join('').slice(0,2);
+                const badges   = client.contracts.map(c =>
+                    `<span class="cm-ins-badge">${typeIcon[c.type] || '📋'} ${typeLabel[c.type] || c.type || '?'}</span>`
+                ).join('');
+
+                const contracts = client.contracts.map(c => `
+                    <div class="cm-contract">
+                        <div>
+                            <div class="cm-contract-type">${typeIcon[c.type] || '📋'} ${typeLabel[c.type] || c.type || 'Unknown'} Insurance</div>
+                            <div class="cm-contract-plan">${c.plan ? c.plan.charAt(0).toUpperCase() + c.plan.slice(1) + ' plan' : 'No plan'}</div>
+                        </div>
+                        <div class="cm-contract-detail">Premium: <strong>${c.premium ? Number(c.premium).toLocaleString('fr-MA') + ' MAD' : '—'}</strong></div>
+                        <div class="cm-contract-detail">From: <strong>${c.start || '—'}</strong></div>
+                        <div class="cm-contract-detail">To: <strong>${c.end || '—'}</strong></div>
+                        ${statusPill(c.status)}
+                    </div>`
+                ).join('');
+
+                html += `
+                <div class="cm-client" id="cmc-${idx}">
+                    <div class="cm-client-head" onclick="toggleCmc('cmc-${idx}')">
+                        <div class="cm-avatar">${initials}</div>
+                        <div style="flex:1; min-width:0;">
+                            <div class="cm-client-name">${client.name}</div>
+                            <div class="cm-client-contact">
+                                ${client.email ? '📧 ' + client.email : ''}
+                                ${client.phone ? ' · 📞 ' + client.phone : ''}
+                            </div>
+                        </div>
+                        <div class="cm-ins-badges">${badges}</div>
+                        <span class="cm-chevron">▼</span>
+                    </div>
+                    <div class="cm-contracts">${contracts}</div>
+                </div>`;
+            });
+
+            document.getElementById('cmBody').innerHTML = html;
+            // Auto-open if only one client
+            if (data.clients.length === 1) {
+                document.getElementById('cmc-0')?.classList.add('open');
+            }
+        })
+        .catch(() => {
+            document.getElementById('cmBody').innerHTML =
+                '<div class="cm-empty">⚠️ Failed to load clients. Please try again.</div>';
         });
+}
 
-        function updateDateTime() {
-            const now = new Date();
+function closeClientModal() {
+    document.getElementById('cmOverlay').classList.remove('open');
+}
 
-            const options = {
-            weekday: 'long',
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric'
-        };
+function handleOverlayClick(e) {
+    if (e.target === document.getElementById('cmOverlay')) closeClientModal();
+}
 
-        const formattedDate = now.toLocaleDateString('en-US', options);
+function toggleCmc(id) {
+    document.getElementById(id)?.classList.toggle('open');
+}
 
-        document.getElementById('currentDate').textContent = formattedDate;
+// Escape key closes modal
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeClientModal(); });
+
+// ── Charts ──
+const chartLabels   = {{ chartLabels|raw }};
+const chartData     = {{ chartData|raw }};
+const monthlyTotals = {{ monthlyTotals|raw }};
+const selectedMonth = {{ selectedMonth }};
+
+const isDark      = !document.body.classList.contains('light-mode');
+const gridColor   = isDark ? 'rgba(255,255,255,.06)' : 'rgba(0,0,0,.06)';
+const tickColor   = isDark ? '#8892a4' : '#64748b';
+const tooltipBg   = isDark ? '#1a1f2e' : '#ffffff';
+const tooltipText = isDark ? '#ffffff' : '#1e293b';
+
+const barCtx = document.getElementById('revenueChart');
+if (barCtx && chartLabels.length > 0) {
+    new Chart(barCtx, {
+        type: 'bar',
+        data: {
+            labels: chartLabels,
+            datasets: [{ label: 'Revenue (MAD)', data: chartData,
+                backgroundColor: chartLabels.map((_, i) => ['rgba(201,168,76,.85)','rgba(96,165,250,.85)','rgba(52,211,153,.85)','rgba(251,146,60,.85)','rgba(167,139,250,.85)','rgba(244,114,182,.85)'][i % 6]),
+                borderColor: 'transparent', borderRadius: 8, borderSkipped: false }]
+        },
+        options: { responsive:true, maintainAspectRatio:false,
+            plugins: { legend:{display:false}, tooltip:{ backgroundColor:tooltipBg, titleColor:tooltipText, bodyColor:tooltipText, borderColor:'rgba(201,168,76,.3)', borderWidth:1, padding:10, callbacks:{ label: ctx => ' '+ctx.parsed.y.toLocaleString('fr-MA')+' MAD' } } },
+            scales: { x:{ grid:{display:false}, ticks:{color:tickColor,font:{size:11}} }, y:{ grid:{color:gridColor}, ticks:{color:tickColor,font:{size:11}, callback: v => v.toLocaleString('fr-MA')+' MAD'}, beginAtZero:true } }
         }
+    });
+}
 
-        // Run once on load
-        updateDateTime();
-
-        // If you also want it to auto-update every minute:
-        setInterval(updateDateTime, 60000);
-    </script>
+const yearCtx = document.getElementById('yearChart');
+if (yearCtx) {
+    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    new Chart(yearCtx, {
+        type: 'line',
+        data: { labels: months, datasets: [{ data: monthlyTotals, borderColor:'#c9a84c', backgroundColor:'rgba(201,168,76,.08)', borderWidth:2, pointRadius: months.map((_,i) => i+1===selectedMonth?5:2), pointBackgroundColor: months.map((_,i) => i+1===selectedMonth?'#c9a84c':'transparent'), pointBorderColor:'#c9a84c', tension:0.4, fill:true }] },
+        options: { responsive:true, maintainAspectRatio:false,
+            plugins: { legend:{display:false}, tooltip:{ backgroundColor:tooltipBg, titleColor:tooltipText, bodyColor:tooltipText, borderColor:'rgba(201,168,76,.3)', borderWidth:1, callbacks:{ label: ctx => ' '+ctx.parsed.y.toLocaleString('fr-MA')+' MAD' } } },
+            scales: { x:{ grid:{display:false}, ticks:{color:tickColor,font:{size:10}} }, y:{ grid:{color:gridColor}, ticks:{color:tickColor,font:{size:10}, callback: v => v>=1000?(v/1000).toFixed(0)+'k':v}, beginAtZero:true } }
+        }
+    });
+}
+</script>
 </body>
 </html>
