@@ -23,91 +23,72 @@ class SmsService
     }
 
     /**
-     * Send SMS when admin approves a dossier.
-     * Called from ProsController::approve()
+     * Send WhatsApp message when admin approves a dossier.
      */
     public function sendApproved(string $phone, string $firstName): bool
     {
-        $message = "Bonjour {$firstName}, votre dossier AssureX a été approuvé ✅. "
-                 . "Félicitations ! Un agent vous contactera pour finaliser votre contrat.";
+        $message = "Bonjour {$firstName}, votre dossier AssureX a ete approuve. ";
 
         return $this->send($phone, $message);
     }
 
     /**
-     * Send SMS when admin rejects a dossier.
-     * Called from ProsController::reject()
+     * Send WhatsApp message when admin rejects a dossier.
      */
     public function sendRejected(string $phone, string $firstName, ?string $reason = null): bool
     {
-        $message = "Bonjour {$firstName}, votre dossier AssureX nécessite des modifications ❌.";
+        $message = "Bonjour {$firstName}, votre dossier AssureX necessite des modifications. ";
 
         if ($reason) {
-            $message .= " Motif : {$reason}.";
+            $message .= "Motif : {$reason}. ";
         }
 
-        $message .= " Un agent vous contactera prochainement.";
+        $message .= "Un agent vous contactera prochainement. - AssureX";
 
         return $this->send($phone, $message);
     }
 
     /**
-     * Core send method — normalizes Moroccan numbers and calls Twilio.
+     * Core send — uses Twilio WhatsApp sandbox.
      */
     private function send(string $to, string $message): bool
     {
         $normalized = $this->normalizePhone($to);
 
         if (!$normalized) {
-            $this->logger->warning("SmsService: could not normalize phone number '{$to}', SMS skipped.");
+            $this->logger->warning("SmsService: could not normalize phone '{$to}', skipped.");
             return false;
         }
 
         try {
-            $this->client->messages->create($normalized, [
-                'from' => $this->from,
-                'body' => $message,
-            ]);
+            $this->client->messages->create(
+                'whatsapp:' . $normalized,        // TO
+                [
+                    'from' => 'whatsapp:+14155238886', // Twilio sandbox FROM
+                    'body' => $message,
+                ]
+            );
 
-            $this->logger->info("SmsService: SMS sent successfully to {$normalized}");
+            $this->logger->info("WhatsApp sent to {$normalized}");
             return true;
 
         } catch (\Exception $e) {
-            // Log the error but never crash the app — SMS failure is non-blocking
-            $this->logger->error("SmsService: Twilio error — " . $e->getMessage());
+            $this->logger->error("WhatsApp failed: " . $e->getMessage());
             return false;
         }
     }
 
     /**
-     * Normalize Moroccan phone numbers to E.164 format (+212XXXXXXXXX)
-     *
-     * Handles:
-     *   0600000000   → +212600000000
-     *   0700000000   → +212700000000
-     *   212600000000 → +212600000000
-     *   +212600000000 → +212600000000 (already fine)
+     * Normalize Moroccan numbers to E.164 (+212XXXXXXXXX)
      */
     private function normalizePhone(string $phone): ?string
     {
-        // Strip all spaces, dashes, dots
         $phone = preg_replace('/[\s\-\.]/', '', $phone);
 
-        // Already in E.164 format
-        if (preg_match('/^\+212[67]\d{8}$/', $phone)) {
-            return $phone;
-        }
+        if (preg_match('/^\+212[67]\d{8}$/', $phone)) return $phone;
+        if (preg_match('/^0[67]\d{8}$/', $phone))     return '+212' . substr($phone, 1);
+        if (preg_match('/^212[67]\d{8}$/', $phone))   return '+' . $phone;
 
-        // Local Moroccan format: 06XXXXXXXX or 07XXXXXXXX
-        if (preg_match('/^0[67]\d{8}$/', $phone)) {
-            return '+212' . substr($phone, 1);
-        }
-
-        // Without + but with country code: 2126XXXXXXXX
-        if (preg_match('/^212[67]\d{8}$/', $phone)) {
-            return '+' . $phone;
-        }
-
-        return null; // unrecognized — skip safely
+        return null;
     }
 }
