@@ -7,7 +7,6 @@
 /public/bundles/
 /var/
 /vendor/
-backup.sql
 .env
 .env.local
 ###< symfony/framework-bundle ###
