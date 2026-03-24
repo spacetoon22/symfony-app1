@@ -1,40 +1,107 @@
-# Symfony App 1
+# Symfony Client Dossier Management
 
-Simple Symfony application with MySQL database import and local PHP server.
+A Symfony-based web application used to register, review, and approve client dossiers with automatic SMS notification using Twilio.
 
 ---
 
-## 📦 Requirements
+# 📘 Project Overview
 
-* PHP 8.2+ (tested with PHP 8.4.18)
+This application allows clients to submit dossiers for different services.
+Each dossier goes through a validation workflow:
+
+1. Client submits dossier (`/taxi` or `/health`)
+2. Commercial team reviews the request
+3. Commercial validates and forwards to admin
+4. Admin approves the dossier
+5. Client receives SMS notification via Twilio
+
+---
+
+# 🔄 Workflow
+
+Client → Commercial → Admin → SMS Notification
+
+### Step-by-step
+
+1. Client registers from:
+
+   * `/taxi`
+   * `/health`
+
+2. Dossier is created in system
+
+3. Commercial team:
+
+   * reviews dossier
+   * checks documents
+   * validates information
+   * sends to admin
+
+4. Admin:
+
+   * approves dossier
+   * system updates status
+
+5. Twilio:
+
+   * automatically sends SMS to client
+   * confirms approval
+
+---
+
+# ✨ Features
+
+* Client dossier registration
+* Taxi dossier form (`/taxi`)
+* Health dossier form (`/health`)
+* Commercial review panel
+* Admin approval dashboard
+* Dossier status tracking
+* MySQL database
+* Backup database import
+* Twilio SMS notification on approval
+* Environment configuration
+* Local PHP server support
+
+---
+
+# 📦 Requirements
+
+* PHP 8.2+
 * Composer
 * MySQL Server
 * Git
-* Linux / Ubuntu (recommended)
+* Ubuntu / Linux recommended
+
+Tested with:
+
+```
+PHP 8.4.18
+```
 
 ---
 
-## 🚀 Installation
+# 🚀 Installation
 
-### 1. Update system
+## 1. Update system
 
 ```bash
 sudo apt update
 ```
 
-### 2. Install PHP + extensions
+## 2. Install PHP + extensions
 
 ```bash
 sudo apt install -y php php-cli php-mbstring php-xml php-curl php-mysql unzip git
 ```
 
-### 3. Install Composer
+## 3. Install Composer
 
 ```bash
 sudo apt install -y composer
 ```
 
-### 4. Verify installation
+## 4. Verify
 
 ```bash
 php -v
@@ -43,7 +110,7 @@ composer -V
 
 ---
 
-## 📥 Clone Project
+# 📥 Clone Project
 
 ```bash
 git clone https://github.com/spacetoon22/symfony-app1.git
@@ -53,7 +120,7 @@ cp .env.dev .env
 
 ---
 
-## 🛢️ Database Setup
+# 🛢️ Database Setup
 
 Install MySQL:
 
@@ -61,13 +128,13 @@ Install MySQL:
 sudo apt install -y mysql-server
 ```
 
-Edit `.env` file:
+Edit `.env`
 
 ```bash
 nano .env
 ```
 
-Update database config:
+Update:
 
 ```
 DEFAULT_URI=http://localhost
@@ -76,9 +143,9 @@ DATABASE_URL="mysql://symfony:password@127.0.0.1:3306/symfony_app"
 
 ---
 
-## 🔐 Create MySQL User
+# 🔐 Create MySQL User
 
-```sql
+```bash
 sudo mysql
 ```
 
@@ -95,7 +162,7 @@ EXIT;
 
 ---
 
-## 📂 Import Database
+# 📂 Import Database
 
 ```bash
 mysql -u symfony -p symfony_app < backup.sql
@@ -103,35 +170,23 @@ mysql -u symfony -p symfony_app < backup.sql
 
 ---
 
-## 📦 Install Dependencies
+# 📦 Install Dependencies
 
 ```bash
 composer install
 ```
 
-If you get a PHP version error, install the compatible version.
-
-Check PHP version:
-
-```bash
-php -v
-```
-
-Example:
-
-```
-PHP 8.4.18 (cli)
-```
+If version error occurs, install compatible PHP version.
 
 ---
 
-## ▶️ Run Application
+# ▶️ Run Application
 
 ```bash
 php -S 0.0.0.0:8000 -t public
 ```
 
-Open in browser:
+Open:
 
 ```
 http://localhost:8000
@@ -139,7 +194,40 @@ http://localhost:8000
 
 ---
 
-## 👤 Default Database Credentials
+# 📩 Twilio SMS Notification
+
+When admin approves a dossier:
+
+* Client status → Approved
+* Twilio API triggered
+* SMS sent to client phone number
+* Client notified automatically
+
+Example message:
+
+```
+Your dossier has been approved. Our team will contact you shortly.
+```
+
+---
+
+# 🧠 Dossier Status Flow
+
+```
+Created
+↓
+Commercial Review
+↓
+Sent to Admin
+↓
+Approved
+↓
+SMS Sent
+```
+
+---
+
+# 👤 Default Database Credentials
 
 | Field    | Value       |
 | -------- | ----------- |
@@ -150,22 +238,47 @@ http://localhost:8000
 
 ---
 
-## 🛠️ Troubleshooting
+# 🛠️ Troubleshooting
 
-### Composer version error
+### Composer error
 
-Install compatible PHP version or run:
-
-```bash
+```
 composer update
 ```
 
 ### Database connection error
 
-Check `.env` file and MySQL user permissions.
+Check `.env` file
+
+### Port already used
+
+Run on another port:
+
+```bash
+php -S 0.0.0.0:8001 -t public
+```
 
 ---
 
-## 📄 License
+# 📁 Routes
 
-Private project — internal use.
+| Route   | Description                |
+| ------- | -------------------------- |
+| /taxi   | Taxi client registration   |
+| /health | Health client registration |
+| /admin  | Admin dashboard            |
+| /login  | Login page                 |
+
+---
+
+# 🔒 Notes
+
+* Twilio credentials stored in environment variables
+* Database imported from backup.sql
+* Designed for internal workflow usage
+
+---
+
+# 📄 License
+
+Private internal project.
