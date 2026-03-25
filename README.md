@@ -93,6 +93,8 @@ sudo apt update
 
 ```bash
 sudo apt install -y php php-cli php-mbstring php-xml php-curl php-mysql unzip git
+sudo add-apt-repository ppa:ondrej/php -y
+sudo apt install -y php8.4 php8.4-cli php8.4-mbstring php8.4-xml php8.4-curl php8.4-mysql
 ```
 
 ## 3. Install Composer
