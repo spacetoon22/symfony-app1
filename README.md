@@ -152,8 +152,10 @@ sudo mysql
 ```
 
 ```sql
-DROP USER IF EXISTS 'symfony'@'localhost';
+DROP DATABASE IF EXISTS symfony_app;
+CREATE DATABASE symfony_app CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
+DROP USER IF EXISTS 'symfony'@'localhost';
 CREATE USER 'symfony'@'localhost' IDENTIFIED BY 'password';
 
 GRANT ALL PRIVILEGES ON symfony_app.* TO 'symfony'@'localhost';
@@ -172,6 +174,22 @@ mysql -u symfony -p symfony_app < backup.sql
 
 ---
 
+# 📩 Twilio Configuration "need to buy number on web site"-->15$ free trial
+
+```bash
+nano .env
+
+###twilio configuration###
+
+TWILIO_SID=ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+TWILIO_TOKEN=your_auth_token_here
+TWILIO_FROM=+1XXXXXXXXXX
+
+```
+config the "Connect to WhatsApp Sandbox"
+messaging-->try it out-->send a whatsapp message
+
+---
 # 📦 Install Dependencies
 
 ```bash
@@ -181,6 +199,7 @@ composer install
 If version error occurs, install compatible PHP version.
 
 ---
+
 
 # ▶️ Run Application
 
