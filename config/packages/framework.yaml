@@ -3,11 +3,20 @@ framework:
     secret: '%env(APP_SECRET)%'
 
     # Note that the session will be started ONLY if you read or write from it.
-    session: true
+
 
     #esi: true
     #fragments: true
-
+    http_method_override: false
+    handle_all_throwables: true
+    session:
+        cookie_secure: auto
+        cookie_samesite: lax
+        handler_id: null
+    validation:
+        email_validation_mode: html5
+    php_errors:
+        log: true
 when@test:
     framework:
         test: true
