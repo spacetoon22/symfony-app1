@@ -25,6 +25,10 @@ services:
 
     App\Service\SmsService:
         arguments:
-            $twilioSid:    '%env(TWILIO_SID)%'
-            $twilioToken:  '%env(TWILIO_TOKEN)%'
-            $twilioFrom:   '%env(TWILIO_FROM)%'
+
+            #$twilioSid:    '%env(TWILIO_SID)%'
+            #$twilioToken:  '%env(TWILIO_TOKEN)%'
+            #$twilioFrom:   '%env(TWILIO_FROM)%'
+            
+            $ringoverApiKey: '%env(RINGOVER_API_KEY)%'
+            $ringoverFrom:   '%env(RINGOVER_FROM)%'
