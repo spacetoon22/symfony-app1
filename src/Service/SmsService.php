@@ -27,7 +27,7 @@ class SmsService
 
     public function sendApproved(string $phone, string $firstName): bool
     {
-        $message = "Bonjour {$firstName}, votre dossier AssureX a ete approuve. ✅";
+        $message = "Bonjour {$firstName}, votre dossier AssureX a ete approuvee. ✅";
         return $this->send($phone, $message);
     }
 
